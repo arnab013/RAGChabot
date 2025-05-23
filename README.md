@@ -28,3 +28,154 @@ Built in Python with:
    ```bash
    git clone https://github.com/arnab013/RAGChabot.git
    cd RAGChabot
+
+Here’s a complete `README.md` with **step-by-step copy-paste instructions** tailored to your RAG-based SDG patent chatbot project.
+
+You can copy this and save it as `README.md` in the root of your GitHub repo:
+
+---
+
+
+## 🖥️ Setup Instructions (Windows-friendly)
+
+> ✅ Follow these steps in order in **PowerShell** or **Command Prompt**
+
+---
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/arnab013/RAGChabot.git
+cd RAGChabot
+````
+
+---
+
+### 2. Create and activate virtual environment
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate  # for Windows
+```
+
+---
+
+### 3. Install required packages
+
+```bash
+pip install -r requirements.txt
+```
+
+If you get an error related to `parquet` or `pyarrow`, run:
+
+```bash
+pip install pyarrow
+```
+
+---
+
+### 4. Prepare your dataset
+
+Place your patent dataset in CSV format (e.g., `final_dataset.csv`) in the project root.
+
+---
+
+### 5. Build the embeddings & FAISS index
+
+```bash
+python -m src.embed_build final_dataset.csv
+```
+
+This will:
+
+* Convert the CSV into a `.parquet` file for fast access
+* Generate sentence embeddings for patent chunks
+* Save a FAISS index and metadata in the `embeddings/` folder
+
+---
+
+### 6. Start the chatbot CLI
+
+```bash
+python -m src.demo_cli
+```
+
+You’ll see:
+
+```
+🔎 RAG chatbot ready. Type 'exit' to quit.
+👉 
+```
+
+---
+
+## 💬 Example Queries
+
+```text
+👉 patents related to sdg 6 water purification in africa
+👉 show me the top 10 technologies in sdg 3 with number of patents
+👉 who is the applicant of patent (1487386)
+👉 what is new in this patent according to the inventor
+👉 how I can innovate from the Improved Medical Thermal Energy Exchange patent
+👉 give me SDG 7 hydrogen-production patents filed after 2021
+👉 list SDG 13 filings on direct-air CO₂ capture
+```
+
+---
+
+## 📁 Project Structure
+
+```
+.
+├── embeddings/            # FAISS index + metadata
+├── src/
+│   ├── demo_cli.py        # CLI entrypoint
+│   ├── embed_build.py     # Builds embeddings and index
+│   ├── retrieval.py       # FAISS chunk retriever
+│   ├── pipeline.py        # RAG orchestration
+│   ├── query_rewrite.py   # LLM-based rewrite + filter extraction
+│   ├── summarise.py       # Map-reduce summarization
+│   ├── stats_engine.py    # Yearly/group aggregation
+│   ├── llm_clients.py     # Mixtral API handler
+│   ├── filter_ops.py      # Applies dynamic filters
+│   ├── token_utils.py     # Token counter
+│   └── data_ingest.py     # Loads CSV/parquet and joins text
+├── final_dataset.csv      # Your patent CSV (you provide this)
+├── requirements.txt
+└── README.md
+```
+
+---
+
+## ✅ GitHub Deployment Steps
+
+If you haven’t pushed yet:
+
+```bash
+git init
+git add .
+git commit -m "Initial Commit - a minimal RAG bot based on SDG Patent Data"
+git remote add origin https://github.com/arnab013/RAGChabot.git
+git branch -M main
+git push -u origin main
+```
+
+---
+
+## 📄 License
+
+This project is released under the [MIT License](LICENSE).
+
+---
+
+## 🙋‍♂️ Author
+
+Developed by **Arnab Saha**
+Feel free to contribute or raise issues!
+
+```
+
+---
+
+Let me know if you want to auto-generate a `LICENSE` file (MIT or otherwise), and I’ll give you that too.
+```
