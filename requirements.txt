@@ -1,0 +1,9 @@
+pandas
+python-dotenv
+tqdm
+sentence-transformers
+faiss-cpu
+tiktoken          # token counting (optional but handy)
+requests          # simple HTTP for Mistral
+rich              # nicer CLI printing
+pyarrow
