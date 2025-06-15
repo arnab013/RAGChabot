@@ -171,7 +171,7 @@ This project is released under the [MIT License](LICENSE).
 ## 🙋‍♂️ Author
 
 Developed by **Arnab Saha**
-Feel free to contribute or raise issues!
+
 
 ```
 
