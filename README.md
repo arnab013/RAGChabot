@@ -177,5 +177,4 @@ Feel free to contribute or raise issues!
 
 ---
 
-Let me know if you want to auto-generate a `LICENSE` file (MIT or otherwise), and I’ll give you that too.
 ```
