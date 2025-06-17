@@ -20,18 +20,20 @@ session_pipelines = {}
 conversation_history = {}
 
 def is_patent_query(message: str) -> bool:
-    """Determine if the message is asking for patent information"""
-    # Add statistics queries to patent queries
+    """Determine if the message is asking for patent information"""    # Add statistics queries to patent queries
     stats_keywords = [
         "how many patents", "total patents", "number of patents",
-        "by country", "by year", "by technology", "by inventor", 
+        "by country", "by year", "by technology", "by inventor", "by applicant",
         "statistics", "breakdown", "categories", "database size",
-        "patents per", "distribution"
+        "patents per", "distribution", "which countries", "what technologies",
+        "top inventors", "companies", "count", "overview"
     ]
     
     patent_keywords = [
         "patent", "invention", "prior art", "claim", "sdg", 
-        "sustainable development", "technology", "innovation"
+        "sustainable development", "technology", "innovation",
+        "research", "engineering", "scientific", "technical",
+        "find", "search", "analyze", "summarize", "explore"
     ] + stats_keywords
     
     return any(keyword in message.lower() for keyword in patent_keywords)

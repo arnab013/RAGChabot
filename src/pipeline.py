@@ -49,14 +49,13 @@ class RAGPipeline:
                 ok &= apply_filter(row.get(f["column"], ""), f["op"], f["value"])
             mask.append(ok)
         return df.loc[mask]
-    
-    def get_database_stats(self) -> dict:
+
+    def get_database_stats(self) -> Dict[str, Any]:
         """Get comprehensive database statistics"""
         try:
-            # Access the dataframe from retriever
             df = self.retriever.df
             if df is None or df.empty:
-                return {"error": "No data available"}
+                return {"error": "No data available", "total_patents": 0}
             
             stats = {
                 "total_patents": len(df),
@@ -65,193 +64,264 @@ class RAGPipeline:
                 "by_decade": {},
                 "by_technology": {},
                 "by_inventor": {},
+                "by_applicant": {},
                 "date_range": {},
-                "top_assignees": {}
+                "available_columns": list(df.columns)
             }
             
-            # Country statistics
-            if 'country' in df.columns:
-                stats["by_country"] = df['country'].value_counts().head(10).to_dict()
+            # Country statistics (check multiple possible column names)
+            country_cols = ['country', 'applicant_countries', 'inventor_countries']
+            for col in country_cols:
+                if col in df.columns:
+                    country_data = df[col].dropna()
+                    if not country_data.empty:
+                        # Handle multiple countries separated by semicolons
+                        all_countries = []
+                        for countries in country_data:
+                            if isinstance(countries, str):
+                                all_countries.extend([c.strip() for c in countries.split(';') if c.strip()])
+                        if all_countries:
+                            from collections import Counter
+                            stats["by_country"] = dict(Counter(all_countries).most_common(15))
+                        break
             
             # Publication year statistics
-            if 'publication_date' in df.columns:
-                # Extract years from publication dates
-                years = df['publication_date'].str.extract(r'(\d{4})')[0].dropna()
-                if not years.empty:
-                    stats["by_year"] = years.value_counts().sort_index().tail(10).to_dict()
-                    
-                    # Decade analysis
-                    decades = (years.astype(int) // 10 * 10).astype(str) + "s"
-                    stats["by_decade"] = decades.value_counts().sort_index().to_dict()
-                    
-                    # Date range
-                    stats["date_range"] = {
-                        "earliest": years.min(),
-                        "latest": years.max()
-                    }
+            date_cols = ['publication_date', 'filing_date', 'priority_date']
+            for col in date_cols:
+                if col in df.columns:
+                    dates = df[col].dropna()
+                    if not dates.empty:
+                        # Extract years from various date formats
+                        years = dates.astype(str).str.extract(r'(\d{4})')[0].dropna()
+                        if not years.empty:
+                            from collections import Counter
+                            year_counts = Counter(years)
+                            stats["by_year"] = dict(year_counts.most_common(10))
+                            
+                            # Decade analysis
+                            decades = [(int(year) // 10 * 10) for year in years if year.isdigit()]
+                            decade_counts = Counter([f"{decade}s" for decade in decades])
+                            stats["by_decade"] = dict(decade_counts.most_common())
+                            
+                            # Date range
+                            stats["date_range"] = {
+                                "earliest": min(years),
+                                "latest": max(years)
+                            }
+                        break
             
-            # Technology/field analysis (from title or abstract)
-            if 'title' in df.columns:
-                # Extract technology keywords
-                tech_keywords = self._extract_technology_keywords(df['title'])
+            # Technology analysis from titles and abstracts
+            tech_cols = ['title_en', 'title', 'abstract_text', 'abstract']
+            tech_keywords = []
+            for col in tech_cols:
+                if col in df.columns:
+                    text_data = df[col].dropna()
+                    if not text_data.empty:
+                        tech_keywords.extend(self._extract_technology_keywords(text_data))
+                        break
+            
+            if tech_keywords:
+                from collections import Counter
                 stats["by_technology"] = dict(Counter(tech_keywords).most_common(15))
             
             # Inventor analysis
-            if 'inventor' in df.columns:
-                inventors = df['inventor'].dropna()
-                if not inventors.empty:
-                    # Split multiple inventors and count
-                    all_inventors = []
-                    for inv_list in inventors:
-                        if isinstance(inv_list, str):
-                            all_inventors.extend([inv.strip() for inv in inv_list.split(';')])
-                    stats["by_inventor"] = dict(Counter(all_inventors).most_common(10))
+            inventor_cols = ['inventor_names', 'inventor', 'inventors']
+            for col in inventor_cols:
+                if col in df.columns:
+                    inventors = df[col].dropna()
+                    if not inventors.empty:
+                        all_inventors = []
+                        for inv_list in inventors:
+                            if isinstance(inv_list, str):
+                                all_inventors.extend([inv.strip() for inv in inv_list.split(';') if inv.strip()])
+                        if all_inventors:
+                            from collections import Counter
+                            stats["by_inventor"] = dict(Counter(all_inventors).most_common(15))
+                        break
             
-            # Assignee/Applicant analysis
-            if 'applicant' in df.columns:
-                applicants = df['applicant'].dropna()
-                if not applicants.empty:
-                    all_applicants = []
-                    for app_list in applicants:
-                        if isinstance(app_list, str):
-                            all_applicants.extend([app.strip() for app in app_list.split(';')])
-                    stats["top_assignees"] = dict(Counter(all_applicants).most_common(10))
+            # Applicant/Assignee analysis
+            applicant_cols = ['applicant_names', 'applicant', 'assignee', 'assignees']
+            for col in applicant_cols:
+                if col in df.columns:
+                    applicants = df[col].dropna()
+                    if not applicants.empty:
+                        all_applicants = []
+                        for app_list in applicants:
+                            if isinstance(app_list, str):
+                                all_applicants.extend([app.strip() for app in app_list.split(';') if app.strip()])
+                        if all_applicants:
+                            from collections import Counter
+                            stats["by_applicant"] = dict(Counter(all_applicants).most_common(15))
+                        break
             
             return stats
             
         except Exception as e:
             if self.debug:
                 print(f"[DEBUG] Error getting database stats: {e}")
-            return {"error": str(e)}
+            return {"error": str(e), "total_patents": 0}
 
-    def _extract_technology_keywords(self, titles) -> List[str]:
-        """Extract technology keywords from patent titles"""
-        # Common technology domains and keywords
+    def _extract_technology_keywords(self, text_series) -> List[str]:
+        """Extract technology keywords from patent texts"""
         tech_patterns = {
-            'AI/ML': ['artificial intelligence', 'machine learning', 'neural network', 'deep learning', 'ai'],
-            'IoT': ['internet of things', 'iot', 'connected device', 'smart device'],
-            'Blockchain': ['blockchain', 'cryptocurrency', 'distributed ledger'],
-            'Renewable Energy': ['solar', 'wind energy', 'renewable', 'clean energy', 'photovoltaic'],
-            'Biotechnology': ['biotech', 'genetic', 'protein', 'dna', 'pharmaceutical'],
-            'Automotive': ['vehicle', 'automotive', 'car', 'electric vehicle', 'autonomous'],
-            'Medical Device': ['medical device', 'diagnostic', 'therapeutic', 'implant'],
-            'Communication': ['wireless', 'telecommunication', '5g', 'antenna', 'signal'],
-            'Manufacturing': ['manufacturing', 'production', 'assembly', 'industrial'],
-            'Agriculture': ['agriculture', 'farming', 'crop', 'irrigation'],
-            'Environmental': ['environmental', 'pollution', 'waste', 'recycling', 'carbon'],
-            'Software': ['software', 'algorithm', 'computing', 'data processing']
+            'Artificial Intelligence': ['artificial intelligence', 'machine learning', 'neural network', 'deep learning', 'ai', 'ml'],
+            'Internet of Things': ['internet of things', 'iot', 'connected device', 'smart device', 'sensor network'],
+            'Blockchain': ['blockchain', 'cryptocurrency', 'distributed ledger', 'bitcoin', 'smart contract'],
+            'Renewable Energy': ['solar', 'wind energy', 'renewable', 'clean energy', 'photovoltaic', 'sustainable energy'],
+            'Biotechnology': ['biotech', 'genetic', 'protein', 'dna', 'pharmaceutical', 'bio', 'medical'],
+            'Automotive': ['vehicle', 'automotive', 'car', 'electric vehicle', 'autonomous', 'transportation'],
+            'Medical Device': ['medical device', 'diagnostic', 'therapeutic', 'implant', 'health monitoring'],
+            'Communication': ['wireless', 'telecommunication', '5g', 'antenna', 'signal', 'network'],
+            'Manufacturing': ['manufacturing', 'production', 'assembly', 'industrial', 'automation'],
+            'Agriculture': ['agriculture', 'farming', 'crop', 'irrigation', 'precision agriculture'],
+            'Environmental': ['environmental', 'pollution', 'waste', 'recycling', 'carbon', 'emission'],
+            'Software': ['software', 'algorithm', 'computing', 'data processing', 'application'],
+            'Nanotechnology': ['nano', 'nanotechnology', 'nanomaterial', 'nanoparticle'],
+            'Robotics': ['robot', 'robotics', 'automation', 'robotic', 'autonomous system']
         }
         
         keywords = []
-        for title in titles.dropna():
-            title_lower = title.lower()
+        for text in text_series:
+            if pd.isna(text):
+                continue
+            text_lower = str(text).lower()
             for category, patterns in tech_patterns.items():
-                if any(pattern in title_lower for pattern in patterns):
+                if any(pattern in text_lower for pattern in patterns):
                     keywords.append(category)
-                    break  # Only count once per title
+                    break  # Only count once per text
         
         return keywords
 
-    def handle_stats_query(self, question: str) -> str:
-        """Handle database statistics queries"""
-        question_lower = question.lower()
+    def handle_stats_query(self, query: str) -> str:
+        """Handle database statistics and counting queries"""
+        query_lower = query.lower()
         stats = self.get_database_stats()
         
-        if "error" in stats:
-            return f"I apologize, but I encountered an issue accessing the database statistics: {stats['error']}"
+        if stats.get("error"):
+            return f"I'm sorry, but I encountered an issue accessing the database: {stats['error']}. Please try again or contact support if this persists."
         
         # Total patents query
-        if any(phrase in question_lower for phrase in ["how many patents", "total patents", "number of patents"]):
+        if any(phrase in query_lower for phrase in ["how many patents", "total patents", "number of patents", "database size"]):
             response = f"📊 **Database Overview**\n\n"
             response += f"I currently have access to **{stats['total_patents']:,} patents** in my database.\n\n"
             
             if stats.get('date_range'):
                 response += f"**Date Range:** {stats['date_range']['earliest']} - {stats['date_range']['latest']}\n\n"
             
-            # Add top categories overview
+            # Add quick overview of available categories
+            overview_items = []
             if stats.get('by_country'):
-                top_countries = list(stats['by_country'].items())[:3]
-                response += f"**Top Countries:** {', '.join([f'{country} ({count})' for country, count in top_countries])}\n\n"
+                top_country = list(stats['by_country'].items())[0]
+                overview_items.append(f"Countries: {len(stats['by_country'])} (top: {top_country[0]} with {top_country[1]} patents)")
             
             if stats.get('by_technology'):
-                top_techs = list(stats['by_technology'].items())[:3]
-                response += f"**Top Technologies:** {', '.join([f'{tech} ({count})' for tech, count in top_techs])}\n\n"
+                top_tech = list(stats['by_technology'].items())[0]
+                overview_items.append(f"Technologies: {len(stats['by_technology'])} (top: {top_tech[0]} with {top_tech[1]} patents)")
             
-            response += "💡 *Ask me about specific categories like countries, years, technologies, or inventors for detailed breakdowns!*"
+            if overview_items:
+                response += "**Quick Overview:**\n" + "\n".join([f"• {item}" for item in overview_items]) + "\n\n"
+            
+            response += "💡 *Ask me about specific categories like 'patents by country', 'patents by year', or 'technology breakdown' for detailed analysis!*"
             return response
         
         # Country-based queries
-        elif any(phrase in question_lower for phrase in ["by country", "country", "countries"]):
+        elif any(phrase in query_lower for phrase in ["by country", "country", "countries", "which countries"]):
             if not stats.get('by_country'):
-                return "I don't have country information available in the current dataset."
+                return "I apologize, but I don't have country information available in the current dataset. The available data columns are: " + ", ".join(stats.get('available_columns', []))
             
             response = f"🌍 **Patents by Country**\n\n"
-            for country, count in list(stats['by_country'].items())[:10]:
+            response += f"**Total Countries Represented:** {len(stats['by_country'])}\n\n"
+            
+            for i, (country, count) in enumerate(list(stats['by_country'].items())[:10], 1):
                 percentage = (count / stats['total_patents']) * 100
-                response += f"• **{country}**: {count:,} patents ({percentage:.1f}%)\n"
+                response += f"{i}. **{country}**: {count:,} patents ({percentage:.1f}%)\n"
+            
+            if len(stats['by_country']) > 10:
+                response += f"\n*... and {len(stats['by_country']) - 10} more countries*"
+            
             return response
         
         # Time-based queries
-        elif any(phrase in question_lower for phrase in ["by year", "yearly", "timeline", "over time"]):
+        elif any(phrase in query_lower for phrase in ["by year", "yearly", "timeline", "over time", "per year"]):
             if not stats.get('by_year'):
-                return "I don't have publication date information available in the current dataset."
+                return "I apologize, but I don't have publication date information available in the current dataset."
             
-            response = f"📅 **Recent Patents by Year**\n\n"
-            for year, count in stats['by_year'].items():
+            response = f"📅 **Patents by Year**\n\n"
+            response += f"**Years Covered:** {stats['date_range']['earliest']} - {stats['date_range']['latest']}\n\n"
+            
+            # Show recent years
+            response += "**Recent Years:**\n"
+            sorted_years = sorted(stats['by_year'].items(), reverse=True)
+            for year, count in sorted_years[:10]:
                 response += f"• **{year}**: {count:,} patents\n"
             
+            # Show decade breakdown if available
             if stats.get('by_decade'):
                 response += f"\n**By Decade:**\n"
-                for decade, count in stats['by_decade'].items():
+                for decade, count in sorted(stats['by_decade'].items(), reverse=True):
                     response += f"• **{decade}**: {count:,} patents\n"
+            
             return response
         
-        # Technology-based queries  
-        elif any(phrase in question_lower for phrase in ["technology", "technologies", "technical field", "domain"]):
+        # Technology-based queries
+        elif any(phrase in query_lower for phrase in ["technology", "technologies", "technical field", "domain", "tech"]):
             if not stats.get('by_technology'):
-                return "I don't have technology classification information readily available."
+                return "I apologize, but I don't have enough technology classification data available. This might be because the patent titles/abstracts don't contain recognizable technology keywords."
             
             response = f"🔬 **Patents by Technology Domain**\n\n"
-            for tech, count in list(stats['by_technology'].items())[:10]:
+            response += f"**Technology Areas Identified:** {len(stats['by_technology'])}\n\n"
+            
+            for i, (tech, count) in enumerate(list(stats['by_technology'].items())[:12], 1):
                 percentage = (count / stats['total_patents']) * 100
-                response += f"• **{tech}**: {count:,} patents ({percentage:.1f}%)\n"
+                response += f"{i}. **{tech}**: {count:,} patents ({percentage:.1f}%)\n"
+            
             return response
         
         # Inventor-based queries
-        elif any(phrase in question_lower for phrase in ["inventor", "inventors", "who invented"]):
+        elif any(phrase in query_lower for phrase in ["inventor", "inventors", "who invented", "by inventor"]):
             if not stats.get('by_inventor'):
-                return "I don't have detailed inventor information available in the current dataset."
+                return "I apologize, but I don't have detailed inventor information available in the current dataset."
             
             response = f"👨‍🔬 **Top Inventors**\n\n"
-            for inventor, count in list(stats['by_inventor'].items())[:10]:
-                response += f"• **{inventor}**: {count:,} patents\n"
-            return response
-        
-        # Assignee/Company queries
-        elif any(phrase in question_lower for phrase in ["company", "companies", "assignee", "applicant"]):
-            if not stats.get('top_assignees'):
-                return "I don't have assignee/applicant information available in the current dataset."
+            response += f"**Total Inventors:** {len(stats['by_inventor'])}\n\n"
             
-            response = f"🏢 **Top Patent Assignees**\n\n"
-            for assignee, count in list(stats['top_assignees'].items())[:10]:
-                response += f"• **{assignee}**: {count:,} patents\n"
+            for i, (inventor, count) in enumerate(list(stats['by_inventor'].items())[:10], 1):
+                response += f"{i}. **{inventor}**: {count:,} patents\n"
+            
             return response
         
+        # Company/Applicant queries
+        elif any(phrase in query_lower for phrase in ["company", "companies", "assignee", "applicant", "organization"]):
+            if not stats.get('by_applicant'):
+                return "I apologize, but I don't have assignee/applicant information available in the current dataset."
+            
+            response = f"🏢 **Top Patent Assignees/Companies**\n\n"
+            response += f"**Total Organizations:** {len(stats['by_applicant'])}\n\n"
+            
+            for i, (applicant, count) in enumerate(list(stats['by_applicant'].items())[:10], 1):
+                response += f"{i}. **{applicant}**: {count:,} patents\n"
+            
+            return response
+        
+        # General breakdown query
         else:
-            # General stats query
-            response = f"📊 **Database Statistics Summary**\n\n"
+            response = f"📊 **Database Statistics Overview**\n\n"
             response += f"**Total Patents:** {stats['total_patents']:,}\n\n"
             
-            available_categories = []
-            if stats.get('by_country'): available_categories.append("countries")
-            if stats.get('by_year'): available_categories.append("years")  
-            if stats.get('by_technology'): available_categories.append("technologies")
-            if stats.get('by_inventor'): available_categories.append("inventors")
-            if stats.get('top_assignees'): available_categories.append("companies")
+            available_breakdowns = []
+            if stats.get('by_country'): available_breakdowns.append(f"**Countries**: {len(stats['by_country'])} countries")
+            if stats.get('by_year'): available_breakdowns.append(f"**Years**: {len(stats['by_year'])} years")
+            if stats.get('by_technology'): available_breakdowns.append(f"**Technologies**: {len(stats['by_technology'])} domains")
+            if stats.get('by_inventor'): available_breakdowns.append(f"**Inventors**: {len(stats['by_inventor'])} inventors")
+            if stats.get('by_applicant'): available_breakdowns.append(f"**Companies**: {len(stats['by_applicant'])} organizations")
             
-            if available_categories:
-                response += f"**Available breakdowns:** {', '.join(available_categories)}\n\n"
-                response += "💡 *Ask me for specific category breakdowns! For example: 'Show me patents by country' or 'How many patents per year?'*"
+            if available_breakdowns:
+                response += "**Available Breakdowns:**\n" + "\n".join([f"• {breakdown}" for breakdown in available_breakdowns]) + "\n\n"
+                response += "💡 *Ask me for specific breakdowns! Examples:*\n"
+                response += "• 'Show me patents by country'\n"
+                response += "• 'How many patents per year?'\n"
+                response += "• 'What technologies are covered?'\n"
+                response += "• 'Top inventors in the database'"
             
             return response
 
@@ -263,6 +333,17 @@ class RAGPipeline:
             self.chat_history.clear()
             for msg in conversation_context[-10:]:  # Keep last 10 messages
                 self.chat_history.append(msg)
+
+        # ─── Check for database statistics queries first ─────────────────
+        stats_keywords = [
+            "how many patents", "total patents", "number of patents", "database size",
+            "by country", "by year", "by technology", "by inventor", "by applicant",
+            "statistics", "breakdown", "categories", "patents per", "distribution",
+            "which countries", "what technologies", "top inventors", "companies"
+        ]
+        
+        if any(keyword in user_msg.lower() for keyword in stats_keywords):
+            return self.handle_stats_query(user_msg)
 
         # ─── 0. Innovate-on-patent branch ────────────────────────────────
         m_imp = re.search(
