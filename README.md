@@ -1,217 +1,291 @@
-# RAG-Based Patent Chatbot
+# 🤖 GoalDigger - Advanced RAG Patent Chatbot
 
-A Retrieval-Augmented Generation (RAG) chatbot for querying and exploring Sustainable Development Goal (SDG)-tagged patent data.  
-Built in Python with:
+**GoalDigger** is a sophisticated AI-powered chatbot specializing in patent research and Sustainable Development Goals (SDGs). Built with cutting-edge Retrieval-Augmented Generation (RAG) technology, GoalDigger provides intelligent, conversational access to patent databases with comprehensive analysis capabilities.
 
-- **FAISS** for vector retrieval over patent text chunks  
-- **Sentence-Transformers** for embedding generation  
-- **Mixtral API** (or similar) for LLM-based prompt rewriting, summarization, and final answer generation  
-- Modular pipeline covering query rewriting, targeted retrieval, multi-stage summarization, and conversational context
-- **NEW: Modern React Frontend** for an intuitive user experience
+## ✨ Key Features
 
----
+### 🧠 **Intelligent Conversation Management**
+- **Session-based context**: Maintains conversation history across patent queries and casual chat
+- **Dynamic personality**: Sassy, confident, and helpful GoalDigger persona with professional expertise
+- **Context-aware responses**: Remembers previous discussions and references them appropriately
+- **Seamless mode switching**: Transitions between patent research and casual conversation naturally
 
-## Features
+### 📊 **Advanced Database Analytics**
+- **Comprehensive statistics**: Get insights on patent counts, distributions, and trends
+- **Multi-dimensional analysis**: Breakdown by country, year, technology, inventor, and company
+- **Smart categorization**: Automatic technology domain classification from patent content
+- **Temporal analysis**: Decade-wise trends and publication timeline insights
 
-- **Conversational context**: retains the last 5 turns  
-- **Intelligent query pre-processing**: rewrites user questions for clarity and extracts structured filters & column priorities  
-- **Structured filters**: SDG numbers, IPC/CPC codes, publication dates, applicant/inventor countries, etc.  
-- **Chunk-level indexing**: breaks long documents into 512-token chunks with overlap for fine-grained recall  
-- **Map-reduce summarization**: handles large contexts by summarizing in stages  
-- **Special-case branches**: inventor insights, claim summarization, prior art lookup, family lookup, aggregation & time-series  
-- **“Innovate on patent”** and **“Brainstorm on topic”** modes for R&D prompts  
+### 🔍 **Sophisticated Patent Search**
+- **Natural language queries**: Ask questions in plain English about patents and SDGs
+- **Intelligent filtering**: SDG numbers, IPC/CPC codes, dates, countries, inventors
+- **Chunk-level precision**: 512-token chunks with overlap for fine-grained retrieval
+- **Multi-stage summarization**: Map-reduce approach for handling large contexts
 
----
+### 🎨 **Modern User Experience**
+- **React frontend**: Beautiful, responsive web interface with Tailwind CSS
+- **Real-time chat**: Instant responses with typing indicators and message history
+- **Markdown support**: Rich formatting for technical content and patent details
+- **Mobile-friendly**: Optimized for both desktop and mobile devices
 
-## Quickstart
-
-1. **Clone the repo**  
-   ```bash
-   git clone https://github.com/arnab013/RAGChabot.git
-   cd RAGChabot
-
-Here’s a complete `README.md` with **step-by-step copy-paste instructions** tailored to your RAG-based SDG patent chatbot project.
-
-You can copy this and save it as `README.md` in the root of your GitHub repo:
-
----
-
-
-## 🖥️ Setup Instructions (Windows-friendly)
-
-> ✅ Follow these steps in order in **PowerShell** or **Command Prompt**
+### 🛠 **Advanced Technical Capabilities**
+- **Mixtral LLM integration**: State-of-the-art language model for accurate responses
+- **FAISS vector search**: High-performance similarity search over patent embeddings
+- **Special query modes**: Patent innovation, claim analysis, prior art lookup
+- **5000-token responses**: Comprehensive, detailed answers without cutoffs
 
 ---
 
-### 1. Clone the repository
+## 🚀 Quick Start Guide
+
+### Prerequisites
+- Python 3.8+
+- Node.js 16+
+- Git
+
+### 1. Clone & Setup Environment
 
 ```bash
 git clone https://github.com/arnab013/RAGChabot.git
 cd RAGChabot
-````
 
----
+# Create virtual environment
+python -m venv ragbot
+ragbot\Scripts\activate  # Windows
+# source ragbot/bin/activate  # Linux/Mac
 
-### 2. Create and activate virtual environment
-
-```bash
-python -m venv .venv
-.venv\Scripts\activate  # for Windows
-```
-
----
-
-### 3. Install required packages
-
-```bash
+# Install Python dependencies
 pip install -r requirements.txt
 ```
 
-If you get an error related to `parquet` or `pyarrow`, run:
+### 2. Configure API Keys
 
-```bash
-pip install pyarrow
+Create a `.env` file in the project root:
+
+```env
+MISTRAL_API_KEY=your_mixtral_api_key_here
+SECRET_KEY=your_flask_secret_key_here
 ```
 
----
+### 3. Prepare Patent Data
 
-### 4. Prepare your dataset
-
-Place your patent dataset in CSV format (e.g., `final_dataset.csv`) in the project root.
-
----
-
-### 5. Build the embeddings & FAISS index
+Place your patent dataset as `final_dataset.csv` in the project root, then build the search index:
 
 ```bash
 python -m src.embed_build final_dataset.csv
 ```
 
-This will:
+### 4. Start the Application
 
-* Convert the CSV into a `.parquet` file for fast access
-* Generate sentence embeddings for patent chunks
-* Save a FAISS index and metadata in the `embeddings/` folder
-
----
-
-### 6. Start the chatbot (Choose one option)
-
-#### Option A: CLI Interface
-
+**Backend (Flask API):**
 ```bash
-python -m src.demo_cli
+cd src
+python api.py
 ```
 
-#### Option B: Web Interface with React Frontend
-
-1. Start the Flask API server:
-   ```bash
-   python src/api.py
-   ```
-
-2. In a new terminal, navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-
-3. Install Node.js dependencies:
-   ```bash
-   npm install
-   ```
-
-4. Start the React development server:
-   ```bash
-   npm start
-   ```
-
-5. Open your browser and go to http://localhost:3000
-
----
-
-## React Frontend
-
-The project now includes a modern, responsive React frontend built with Material UI. Features include:
-
-- Clean, intuitive chat interface
-- User and bot message styling
-- Markdown support for formatted responses
-- Loading indicators
-- Clear chat functionality
-- Mobile-friendly responsive design
-
-### Build for Production
-
-To build the React app for production:
-
+**Frontend (React UI):**
 ```bash
 cd frontend
-npm run build
+npm install
+npm start
 ```
 
-This creates an optimized build in the `frontend/build` directory that can be served by any web server.
+Access the application at `http://localhost:3000`
 
 ---
 
-## 💬 Example Queries
+## 💬 Query Examples
 
-```text
-👉 patents related to sdg 6 water purification in africa
-👉 show me the top 10 technologies in sdg 3 with number of patents
-👉 who is the applicant of patent (1487386)
-👉 what is new in this patent according to the inventor
-👉 how I can innovate from the Improved Medical Thermal Energy Exchange patent
-👉 give me SDG 7 hydrogen-production patents filed after 2021
-👉 list SDG 13 filings on direct-air CO₂ capture
+### 📊 **Database Statistics**
+```
+🔸 "How many patents are in the database?"
+🔸 "Show me patents by country"
+🔸 "What technologies are covered?"
+🔸 "Patents by year breakdown"
+🔸 "Top inventors in the database"
+🔸 "Which companies have the most patents?"
+```
+
+### 🔍 **Patent Research**
+```
+🔸 "Patents related to SDG 6 water purification in Africa"
+🔸 "Show me SDG 7 renewable energy patents from 2020-2024"
+🔸 "Find patents by Tesla on battery technology"
+🔸 "What are the latest innovations in carbon capture?"
+🔸 "Patents about AI in healthcare applications"
+```
+
+### 🧪 **Innovation & Analysis**
+```
+🔸 "How can I innovate on patent EP1234567?"
+🔸 "Summarize the claims of this patent"
+🔸 "What's the prior art for patent EP7654321?"
+🔸 "Who are the inventors of this technology?"
+🔸 "Explain the SDG relevance of these patents"
+```
+
+### 💭 **Casual Conversation**
+```
+🔸 "Hi GoalDigger, how are you today?"
+🔸 "What's your expertise area?"
+🔸 "Thanks for the detailed analysis!"
+🔸 "Can you help me understand patent landscapes?"
 ```
 
 ---
+
+## 🏗 Architecture Overview
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   React UI      │◄──►│   Flask API      │◄──►│   RAG Pipeline  │
+│                 │    │                  │    │                 │
+│ • Chat Interface│    │ • Session Mgmt   │    │ • Query Analysis│
+│ • Markdown      │    │ • Context Track  │    │ • FAISS Search  │
+│ • Responsive    │    │ • Error Handling │    │ • LLM Generation│
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                                │                        │
+                                ▼                        ▼
+                       ┌─────────────────┐    ┌─────────────────┐
+                       │  Conversation   │    │   Data Layer    │
+                       │    History      │    │                 │
+                       │                 │    │ • FAISS Index   │
+                       │ • Session Store │    │ • Patent CSV    │
+                       │ • Context Mgmt  │    │ • Embeddings    │
+                       └─────────────────┘    └─────────────────┘
+```
 
 ## 📁 Project Structure
 
 ```
-.
-├── embeddings/            # FAISS index + metadata
-├── src/
-│   ├── demo_cli.py        # CLI entrypoint
-│   ├── embed_build.py     # Builds embeddings and index
-│   ├── retrieval.py       # FAISS chunk retriever
-│   ├── pipeline.py        # RAG orchestration
-│   ├── query_rewrite.py   # LLM-based rewrite + filter extraction
-│   ├── summarise.py       # Map-reduce summarization
-│   ├── stats_engine.py    # Yearly/group aggregation
-│   ├── llm_clients.py     # Mixtral API handler
-│   ├── filter_ops.py      # Applies dynamic filters
-│   ├── token_utils.py     # Token counter
-│   └── data_ingest.py     # Loads CSV/parquet and joins text
-├── final_dataset.csv      # Your patent CSV (you provide this)
-├── requirements.txt
-└── README.md
+RAGChabot/
+├── 📁 frontend/                 # React application
+│   ├── 📁 src/
+│   │   ├── 📁 components/       # Chat UI components
+│   │   ├── App.js              # Main app component
+│   │   └── index.css           # Tailwind styles
+│   ├── package.json            # Node dependencies
+│   └── tailwind.config.js      # Tailwind configuration
+│
+├── 📁 src/                     # Python backend
+│   ├── api.py                  # Flask REST API
+│   ├── pipeline.py             # RAG orchestration
+│   ├── retrieval.py            # FAISS search engine
+│   ├── llm_clients.py          # Mixtral integration
+│   ├── query_rewrite.py        # Query preprocessing
+│   ├── summarise.py            # Response generation
+│   ├── embed_build.py          # Index building
+│   ├── stats_engine.py         # Analytics engine
+│   └── config.py               # Configuration
+│
+├── 📁 embeddings/              # Search index files
+│   ├── faiss_chunks.idx        # FAISS vector index
+│   ├── patents.parquet         # Processed patent data
+│   └── meta.pkl                # Metadata cache
+│
+├── final_dataset.csv           # Raw patent dataset
+├── requirements.txt            # Python dependencies
+├── .env                        # Environment variables
+└── README.md                   # This file
 ```
 
 ---
 
-## ✅ GitHub Deployment Steps
+## 🔧 Development
 
-If you haven’t pushed yet:
+### Adding New Features
+
+1. **Backend changes**: Modify files in `src/`
+2. **Frontend updates**: Edit React components in `frontend/src/`
+3. **Database queries**: Extend `get_database_stats()` in `pipeline.py`
+4. **New LLM capabilities**: Update prompts in `llm_clients.py`
+
+### Testing
 
 ```bash
-git init
-git add .
-git commit -m "Initial Commit - a minimal RAG bot based on SDG Patent Data"
-git remote add origin https://github.com/arnab013/RAGChabot.git
-git branch -M main
-git push -u origin main
+# Test backend components
+python -c "from src.pipeline import RAGPipeline; print('Backend OK')"
+
+# Test API endpoints
+python -c "from src.api import app; print('API OK')"
+
+# Test frontend build
+cd frontend && npm run build
+```
+
+### Production Deployment
+
+1. **Build frontend**: `cd frontend && npm run build`
+2. **Configure environment**: Set production API keys
+3. **Deploy**: Use your preferred hosting service (Heroku, AWS, etc.)
+
+---
+
+## 🎯 Advanced Usage
+
+### Custom Datasets
+
+GoalDigger supports any patent dataset with these columns:
+- `title_en` or `title`: Patent titles
+- `abstract_text`: Patent abstracts
+- `publication_date`: Publication dates
+- `applicant_names`: Company/organization names
+- `inventor_names`: Inventor information
+- `sdg_number`: SDG classifications (optional)
+
+### API Integration
+
+The Flask API provides REST endpoints:
+
+```bash
+POST /api/chat
+{
+    "query": "How many patents are in the database?",
+    "session_id": "user-session-123"
+}
+```
+
+Response:
+```json
+{
+    "response": "📊 Database Overview\n\nI currently have access to **15,847 patents** in my database...",
+    "session_id": "user-session-123"
+}
 ```
 
 ---
 
-## 📄 License
+## 🤝 Contributing
 
-This project is released under the [MIT License](LICENSE).
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
 ---
 
-## 🙋‍♂️ Author
+## 📜 License
 
-Developed by **Arnab Saha**
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙋‍♂️ Support & Contact
+
+- **Developer**: Arnab Saha
+- **Issues**: [GitHub Issues](https://github.com/arnab013/RAGChabot/issues)
+- **Documentation**: See inline code comments and this README
+
+---
+
+## 🙏 Acknowledgments
+
+- **Mixtral AI** for language model capabilities
+- **FAISS** for efficient vector search
+- **React & Tailwind** for the modern UI
+- **Open source community** for supporting tools and libraries
+
+---
+
+*Built with ❤️ for advancing patent research and sustainable development*
