@@ -1,10 +1,8 @@
 # src/pipeline.py
 
 import re
-from collections import Counter
 from collections import deque
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import pandas as pd
 
@@ -14,7 +12,28 @@ from filter_ops       import apply_filter
 from stats_engine     import top_k_group, group_by_year
 from summarise        import map_reduce_summarise
 from llm_clients      import chat
-from token_utils      import count_tokens
+from toke        include_app = "applicant" in user_msg.lower() or "country" in user_msg.lower()
+        allowed     = ", ".join(f"EP{p['publication_number']}" for p in ctx) or "NONE"
+        fields      = ["publication_number", "title_en", "publication_date"]
+        if include_app:
+            fields.append("applicant_countries")
+
+        system_prompt = (
+            f"You are GoalDigger, an expert patent research assistant. You may cite ONLY these publication numbers: {allowed}. "
+            "If none answer, reply: 'I don't have enough information.'\n\n"
+            "FORMATTING INSTRUCTIONS:\n"
+            "- Always prefix patent numbers with 'EP' (e.g., EP123456)\n"
+            "- Use natural language format: 'The patent EP[number] titled \"[title]\" was published in [date] which [detailed description]...'\n"
+            "- Organize your response with clear headings and sections\n"
+            "- Provide comprehensive analysis with technical details\n"
+            "- Explain SDG relevance clearly\n"
+            "- Use proper spacing and structure\n"
+            "- Ensure complete responses - don't cut off mid-sentence\n"
+            "- Include specific patent details when available\n"
+            "- Be thorough and use the full token limit for comprehensive answers\n"
+            "- Make the presentation flow naturally and conversationally\n"
+            "- Maintain context from previous conversation when relevant"
+        )  import count_tokens
 
 MAX_CTX_TOKENS  = 60_000
 PROMPT_OVERHEAD = 2_000
@@ -50,210 +69,6 @@ class RAGPipeline:
             mask.append(ok)
         return df.loc[mask]
     
-    def get_database_stats(self) -> dict:
-        """Get comprehensive database statistics"""
-        try:
-            # Access the dataframe from retriever
-            df = self.retriever.df
-            if df is None or df.empty:
-                return {"error": "No data available"}
-            
-            stats = {
-                "total_patents": len(df),
-                "by_country": {},
-                "by_year": {},
-                "by_decade": {},
-                "by_technology": {},
-                "by_inventor": {},
-                "date_range": {},
-                "top_assignees": {}
-            }
-            
-            # Country statistics
-            if 'country' in df.columns:
-                stats["by_country"] = df['country'].value_counts().head(10).to_dict()
-            
-            # Publication year statistics
-            if 'publication_date' in df.columns:
-                # Extract years from publication dates
-                years = df['publication_date'].str.extract(r'(\d{4})')[0].dropna()
-                if not years.empty:
-                    stats["by_year"] = years.value_counts().sort_index().tail(10).to_dict()
-                    
-                    # Decade analysis
-                    decades = (years.astype(int) // 10 * 10).astype(str) + "s"
-                    stats["by_decade"] = decades.value_counts().sort_index().to_dict()
-                    
-                    # Date range
-                    stats["date_range"] = {
-                        "earliest": years.min(),
-                        "latest": years.max()
-                    }
-            
-            # Technology/field analysis (from title or abstract)
-            if 'title' in df.columns:
-                # Extract technology keywords
-                tech_keywords = self._extract_technology_keywords(df['title'])
-                stats["by_technology"] = dict(Counter(tech_keywords).most_common(15))
-            
-            # Inventor analysis
-            if 'inventor' in df.columns:
-                inventors = df['inventor'].dropna()
-                if not inventors.empty:
-                    # Split multiple inventors and count
-                    all_inventors = []
-                    for inv_list in inventors:
-                        if isinstance(inv_list, str):
-                            all_inventors.extend([inv.strip() for inv in inv_list.split(';')])
-                    stats["by_inventor"] = dict(Counter(all_inventors).most_common(10))
-            
-            # Assignee/Applicant analysis
-            if 'applicant' in df.columns:
-                applicants = df['applicant'].dropna()
-                if not applicants.empty:
-                    all_applicants = []
-                    for app_list in applicants:
-                        if isinstance(app_list, str):
-                            all_applicants.extend([app.strip() for app in app_list.split(';')])
-                    stats["top_assignees"] = dict(Counter(all_applicants).most_common(10))
-            
-            return stats
-            
-        except Exception as e:
-            if self.debug:
-                print(f"[DEBUG] Error getting database stats: {e}")
-            return {"error": str(e)}
-
-    def _extract_technology_keywords(self, titles) -> List[str]:
-        """Extract technology keywords from patent titles"""
-        # Common technology domains and keywords
-        tech_patterns = {
-            'AI/ML': ['artificial intelligence', 'machine learning', 'neural network', 'deep learning', 'ai'],
-            'IoT': ['internet of things', 'iot', 'connected device', 'smart device'],
-            'Blockchain': ['blockchain', 'cryptocurrency', 'distributed ledger'],
-            'Renewable Energy': ['solar', 'wind energy', 'renewable', 'clean energy', 'photovoltaic'],
-            'Biotechnology': ['biotech', 'genetic', 'protein', 'dna', 'pharmaceutical'],
-            'Automotive': ['vehicle', 'automotive', 'car', 'electric vehicle', 'autonomous'],
-            'Medical Device': ['medical device', 'diagnostic', 'therapeutic', 'implant'],
-            'Communication': ['wireless', 'telecommunication', '5g', 'antenna', 'signal'],
-            'Manufacturing': ['manufacturing', 'production', 'assembly', 'industrial'],
-            'Agriculture': ['agriculture', 'farming', 'crop', 'irrigation'],
-            'Environmental': ['environmental', 'pollution', 'waste', 'recycling', 'carbon'],
-            'Software': ['software', 'algorithm', 'computing', 'data processing']
-        }
-        
-        keywords = []
-        for title in titles.dropna():
-            title_lower = title.lower()
-            for category, patterns in tech_patterns.items():
-                if any(pattern in title_lower for pattern in patterns):
-                    keywords.append(category)
-                    break  # Only count once per title
-        
-        return keywords
-
-    def handle_stats_query(self, question: str) -> str:
-        """Handle database statistics queries"""
-        question_lower = question.lower()
-        stats = self.get_database_stats()
-        
-        if "error" in stats:
-            return f"I apologize, but I encountered an issue accessing the database statistics: {stats['error']}"
-        
-        # Total patents query
-        if any(phrase in question_lower for phrase in ["how many patents", "total patents", "number of patents"]):
-            response = f"📊 **Database Overview**\n\n"
-            response += f"I currently have access to **{stats['total_patents']:,} patents** in my database.\n\n"
-            
-            if stats.get('date_range'):
-                response += f"**Date Range:** {stats['date_range']['earliest']} - {stats['date_range']['latest']}\n\n"
-            
-            # Add top categories overview
-            if stats.get('by_country'):
-                top_countries = list(stats['by_country'].items())[:3]
-                response += f"**Top Countries:** {', '.join([f'{country} ({count})' for country, count in top_countries])}\n\n"
-            
-            if stats.get('by_technology'):
-                top_techs = list(stats['by_technology'].items())[:3]
-                response += f"**Top Technologies:** {', '.join([f'{tech} ({count})' for tech, count in top_techs])}\n\n"
-            
-            response += "💡 *Ask me about specific categories like countries, years, technologies, or inventors for detailed breakdowns!*"
-            return response
-        
-        # Country-based queries
-        elif any(phrase in question_lower for phrase in ["by country", "country", "countries"]):
-            if not stats.get('by_country'):
-                return "I don't have country information available in the current dataset."
-            
-            response = f"🌍 **Patents by Country**\n\n"
-            for country, count in list(stats['by_country'].items())[:10]:
-                percentage = (count / stats['total_patents']) * 100
-                response += f"• **{country}**: {count:,} patents ({percentage:.1f}%)\n"
-            return response
-        
-        # Time-based queries
-        elif any(phrase in question_lower for phrase in ["by year", "yearly", "timeline", "over time"]):
-            if not stats.get('by_year'):
-                return "I don't have publication date information available in the current dataset."
-            
-            response = f"📅 **Recent Patents by Year**\n\n"
-            for year, count in stats['by_year'].items():
-                response += f"• **{year}**: {count:,} patents\n"
-            
-            if stats.get('by_decade'):
-                response += f"\n**By Decade:**\n"
-                for decade, count in stats['by_decade'].items():
-                    response += f"• **{decade}**: {count:,} patents\n"
-            return response
-        
-        # Technology-based queries  
-        elif any(phrase in question_lower for phrase in ["technology", "technologies", "technical field", "domain"]):
-            if not stats.get('by_technology'):
-                return "I don't have technology classification information readily available."
-            
-            response = f"🔬 **Patents by Technology Domain**\n\n"
-            for tech, count in list(stats['by_technology'].items())[:10]:
-                percentage = (count / stats['total_patents']) * 100
-                response += f"• **{tech}**: {count:,} patents ({percentage:.1f}%)\n"
-            return response
-        
-        # Inventor-based queries
-        elif any(phrase in question_lower for phrase in ["inventor", "inventors", "who invented"]):
-            if not stats.get('by_inventor'):
-                return "I don't have detailed inventor information available in the current dataset."
-            
-            response = f"👨‍🔬 **Top Inventors**\n\n"
-            for inventor, count in list(stats['by_inventor'].items())[:10]:
-                response += f"• **{inventor}**: {count:,} patents\n"
-            return response
-        
-        # Assignee/Company queries
-        elif any(phrase in question_lower for phrase in ["company", "companies", "assignee", "applicant"]):
-            if not stats.get('top_assignees'):
-                return "I don't have assignee/applicant information available in the current dataset."
-            
-            response = f"🏢 **Top Patent Assignees**\n\n"
-            for assignee, count in list(stats['top_assignees'].items())[:10]:
-                response += f"• **{assignee}**: {count:,} patents\n"
-            return response
-        
-        else:
-            # General stats query
-            response = f"📊 **Database Statistics Summary**\n\n"
-            response += f"**Total Patents:** {stats['total_patents']:,}\n\n"
-            
-            available_categories = []
-            if stats.get('by_country'): available_categories.append("countries")
-            if stats.get('by_year'): available_categories.append("years")  
-            if stats.get('by_technology'): available_categories.append("technologies")
-            if stats.get('by_inventor'): available_categories.append("inventors")
-            if stats.get('top_assignees'): available_categories.append("companies")
-            
-            if available_categories:
-                response += f"**Available breakdowns:** {', '.join(available_categories)}\n\n"
-                response += "💡 *Ask me for specific category breakdowns! For example: 'Show me patents by country' or 'How many patents per year?'*"
-            
-            return response
 
     def ask(self, user_msg: str, conversation_context: List[Dict] = None) -> str:
         
@@ -473,6 +288,7 @@ class RAGPipeline:
 
         # ─── G. “Latest/Recent” inventions → date-sorted list
         if re.search(r"\b(latest|recent)\b", user_msg, re.I):
+            from datetime import datetime
             def ordn(n:int)->str:
                 if 10 <= (n%100) <= 20: s="th"
                 else: s={1:"st",2:"nd",3:"rd"}.get(n%10,"th")
@@ -594,23 +410,15 @@ class RAGPipeline:
         self._last_ctx_tokens = count_tokens(context)
 
         include_app = "applicant" in user_msg.lower() or "country" in user_msg.lower()
-        allowed     = ", ".join(f"EP{p['publication_number']}" for p in ctx) or "NONE"
+        allowed     = ", ".join(p["publication_number"] for p in ctx) or "NONE"
         fields      = ["publication_number", "title_en", "publication_date"]
         if include_app:
             fields.append("applicant_countries")
 
         system_prompt = (
-            f"You are GoalDigger, a helpful and polite AI assistant specializing in patent research. "
             f"You may cite ONLY these publication numbers: {allowed}. "
-            "When you cannot find relevant information to answer a user's query, politely acknowledge this by saying: "
-            "'I apologize, but I don't have enough information in my current database to answer your specific question about [topic]. "
-            "However, I'd be happy to help you with other patent-related queries or provide information on related topics if available.' "
-            "When presenting patent information, use natural language format: "
-            "The patent EP[number] titled '[title]' was published in [date] which [details]... "
-            "Always prefix patent numbers with 'EP' (e.g., EP123456). "
-            "Present information in a conversational, flowing manner. "
-            "Be courteous, acknowledge limitations gracefully, and offer alternative assistance when possible. "
-            "Organize multiple patents clearly with proper headings and complete sentences."
+            "If none answer, reply: 'I don’t have enough information.'\n"
+            "Format bullets as: (" + ", ".join(fields) + ") — short note."
         )
         messages = (
             [{"role":"system","content":system_prompt}] +

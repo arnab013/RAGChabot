@@ -7,6 +7,7 @@ Built in Python with:
 - **Sentence-Transformers** for embedding generation  
 - **Mixtral API** (or similar) for LLM-based prompt rewriting, summarization, and final answer generation  
 - Modular pipeline covering query rewriting, targeted retrieval, multi-stage summarization, and conversational context
+- **NEW: Modern React Frontend** for an intuitive user experience
 
 ---
 
@@ -94,18 +95,61 @@ This will:
 
 ---
 
-### 6. Start the chatbot CLI
+### 6. Start the chatbot (Choose one option)
+
+#### Option A: CLI Interface
 
 ```bash
 python -m src.demo_cli
 ```
 
-You’ll see:
+#### Option B: Web Interface with React Frontend
 
+1. Start the Flask API server:
+   ```bash
+   python src/api.py
+   ```
+
+2. In a new terminal, navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+
+3. Install Node.js dependencies:
+   ```bash
+   npm install
+   ```
+
+4. Start the React development server:
+   ```bash
+   npm start
+   ```
+
+5. Open your browser and go to http://localhost:3000
+
+---
+
+## React Frontend
+
+The project now includes a modern, responsive React frontend built with Material UI. Features include:
+
+- Clean, intuitive chat interface
+- User and bot message styling
+- Markdown support for formatted responses
+- Loading indicators
+- Clear chat functionality
+- Mobile-friendly responsive design
+
+### Build for Production
+
+To build the React app for production:
+
+```bash
+cd frontend
+npm run build
 ```
-🔎 RAG chatbot ready. Type 'exit' to quit.
-👉 
-```
+
+This creates an optimized build in the `frontend/build` directory that can be served by any web server.
 
 ---
 
@@ -171,10 +215,3 @@ This project is released under the [MIT License](LICENSE).
 ## 🙋‍♂️ Author
 
 Developed by **Arnab Saha**
-
-
-```
-
----
-
-```

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import sys
-from .retrieval import PassageRetriever
-from .pipeline  import RAGPipeline
+from retrieval import PassageRetriever
+from pipeline  import RAGPipeline
 
 def main():
     # no CSV argument needed

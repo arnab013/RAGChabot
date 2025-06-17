@@ -2,6 +2,8 @@ import pandas as pd
 from pathlib import Path
 from tqdm import tqdm
 
+from token_utils import count_tokens, count_words
+
 TEXT_COLS = [
     "title_en",
     "abstract_text",
@@ -23,7 +25,6 @@ def concat_text(row, cols=TEXT_COLS, sep="\n\n"):
     return sep.join(str(row[c] or "") for c in cols if pd.notna(row[c]))
 
 # --- simple token/word count utility -------------------------
-from .token_utils import count_tokens, count_words
 
 def text_stats(df: pd.DataFrame, cols=TEXT_COLS):
     """Print avg / max token and word counts across selected columns."""

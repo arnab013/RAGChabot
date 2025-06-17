@@ -7,3 +7,6 @@ tiktoken          # token counting (optional but handy)
 requests          # simple HTTP for Mistral
 rich              # nicer CLI printing
 pyarrow
+flask             # API server for React frontend
+flask-cors        # Enable CORS for API
+charset-normalizer  # Dependency for requests

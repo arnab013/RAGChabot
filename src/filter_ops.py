@@ -7,14 +7,14 @@ Supported ops:  eq, neq, contains, startswith, in, gte, lte, between
 """
 from __future__ import annotations
 from datetime import datetime
-from typing import Any, Sequence
+from typing import Any, Sequence, Union
 import numbers
 
 __all__ = ["apply_filter"]
 
 
 # ───────────────────── helpers ───────────────────────────────────────────
-def _to_date(val: str | datetime):
+def _to_date(val: Union[str, datetime]):
     if isinstance(val, datetime):
         return val
     for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%Y-%m", "%Y"):

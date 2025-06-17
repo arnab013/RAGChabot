@@ -6,9 +6,9 @@ import faiss, pickle, numpy as np, pandas as pd
 from tqdm import tqdm
 import sys
 
-from .config import EMB_MODEL_NAME, EMB_DIR
-from .data_ingest import concat_text, TEXT_COLS
-from .token_utils import count_tokens
+from config import EMB_MODEL_NAME, EMB_DIR
+from data_ingest import concat_text, TEXT_COLS
+from token_utils import count_tokens
 
 def iter_chunks(text: str, max_tokens: int = 512, overlap: int = 64):
     words = text.split()

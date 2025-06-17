@@ -1,5 +1,5 @@
-from .llm_clients import chat
-from .token_utils import count_tokens
+from llm_clients import chat
+from token_utils import count_tokens
 
 MAX_CTX = 60_000    # safe Mixtral window
 CHUNK   = 4_096     # tokens per map chunk

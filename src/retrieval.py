@@ -1,14 +1,14 @@
 import pandas as pd
 from pathlib import Path
 from sentence_transformers import SentenceTransformer
-from typing import Any, Dict, List, Sequence
-from .config import EMB_MODEL_NAME, EMB_DIR
-from .filter_ops import apply_filter
+from typing import Any, Dict, List, Sequence, Union
+from config import EMB_MODEL_NAME, EMB_DIR
+from filter_ops import apply_filter
 
 
 class PassageRetriever:
     def __init__(self,
-                 df: pd.DataFrame | None = None,
+                 df: Union[pd.DataFrame, None] = None,
                  index_name: str = "faiss_chunks.idx"):
         # 1) load metadata table (DataFrame) if not provided
         if df is None:
@@ -56,8 +56,8 @@ class PassageRetriever:
     # ------------- public search -----------------------------------------
     def search(self, query: str,
                max_passages: int = 400,
-               filters: Sequence[Dict[str, Any]] | None = None,
-               column_order: List[str] | None = None,
+               filters: Union[Sequence[Dict[str, Any]], None] = None,
+               column_order: Union[List[str], None] = None,
                top_k_return: int = 60) -> List[Dict[str, Any]]:
 
         q_emb = self.model.encode([query], convert_to_numpy=True)

@@ -1,5 +1,5 @@
 import requests, time
-from .config import MISTRAL_API_KEY, MISTRAL_ENDPOINT, MIXTRAL_MODEL
+from config import MISTRAL_API_KEY, MISTRAL_ENDPOINT, MIXTRAL_MODEL
 
 HEADERS = {
     "Authorization": f"Bearer {MISTRAL_API_KEY}",

@@ -1,6 +1,6 @@
 import json, re
 from typing import List, Dict
-from .llm_clients import chat
+from llm_clients import chat
 
 WHITELIST = [
     "publication_number", "publication_kind", "publication_date", "ipc", "cpc",
