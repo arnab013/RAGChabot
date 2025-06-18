@@ -1,335 +1,219 @@
-# GoalDigger - Patent Research Chatbot
+# RAG Chatbot - Patent Search and Analysis System
 
-GoalDigger is an intelligent chatbot designed for patent research and analysis, with a focus on Sustainable Development Goals (SDGs). The system uses Retrieval-Augmented Generation (RAG) technology to provide conversational access to patent databases, making complex patent research more accessible and intuitive.
+A production-ready RAG (Retrieval-Augmented Generation) chatbot system for patent search and analysis, featuring intelligent query classification, semantic search, and conversational AI capabilities.
 
 ## Features
 
-### Conversation Management
-GoalDigger maintains context throughout your conversation, remembering previous questions and building on past discussions. Whether you're diving deep into specific patents or asking casual questions, the bot adapts its responses accordingly.
+- **Intelligent Query Classification**: Automatically determines whether queries are conversational, patent search, or statistical requests
+- **Patent Search**: Semantic search through patent database with formatted results
+- **Conversational AI**: General chat capabilities with LLM integration
+- **Statistical Analysis**: Patent data analysis and visualization (extensible)
+- **Modern Web Interface**: React-based frontend with responsive design
+- **Structured API Responses**: JSON-formatted responses with multiple content types
 
-### Database Analytics
-The system provides comprehensive insights into patent databases, including breakdowns by country, year, technology domain, inventors, and companies. You can ask questions like "How many patents are from Germany?" or "Show me trends in renewable energy patents over the last decade."
+## System Architecture
 
-### Advanced Patent Search
-Search through patents using natural language queries. The system understands SDG classifications, patent codes (IPC/CPC), date ranges, and inventor names. Results are formatted with standardized European Patent (EP) numbering for easy reference.
+### Backend Components
+- **API Server** (`src/api.py`): Flask-based REST API with session management
+- **Query Classifier** (`src/query_classifier.py`): LLM-powered query type detection
+- **SQL Retriever** (`src/sql_retriever.py`): Database search with remote embedding API
+- **LLM Clients** (`src/llm_clients.py`): Google Gemini Flash 2.0 integration for response generation
+- **Statistics Engine** (`src/stats_queries.py`): Patent data analysis capabilities
 
-### Modern Web Interface
-Built with React and Tailwind CSS, the interface provides a clean, responsive chat experience. The frontend supports markdown formatting, making technical content easy to read on both desktop and mobile devices.
+### Frontend Components
+- **React Application** (`frontend/`): Modern web interface
+- **Chat Interface**: Real-time conversation with the AI
+- **Response Rendering**: Support for text, semantic, and chart response types
 
-### Technical Implementation
-- Uses Mixtral LLM for generating responses up to 5,000 tokens
-- FAISS vector search for efficient similarity matching across patent embeddings
-- Handles multiple query types: patent innovation analysis, claim summaries, and prior art research
-- Session management keeps conversation context active across multiple interactions
+## Quick Start
 
-## Getting Started
-
-### What You'll Need
-- Python 3.8 or newer
-- Node.js 16 or newer
-- Git for cloning the repository
+### Prerequisites
+- Python 3.8+
+- Node.js 14+
+- Google Gemini API key
+- Remote embedding API access
 
 ### Installation
 
-**1. Clone and Set Up the Project**
+1. **Clone and Setup**
+   ```bash
+   git clone <repository-url>
+   cd RAGChabot
+   ```
 
+2. **Backend Setup**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Environment Configuration**   Create `.env` file:   ```
+   GOOGLE_API_KEY=your_google_api_key
+   
+   # Model Configuration (Google only)
+   GOOGLE_MODEL=gemini-2.0-flash
+   
+   REMOTE_EMBEDDING_URL=https://api.confusedelectrons.xyz/embed-query-w-sentence-transformers/
+   REMOTE_EMBEDDING_API_KEY=your_embedding_api_key
+   BACKEND_PORT=5000
+   FRONTEND_PORT=3000
+   ```
+
+4. **Frontend Setup**
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+### Running the Application
+
+1. **Start Backend Server (Production)**
+   ```bash
+   python launch.py
+   ```
+   Or manually:
+   ```bash
+   python run_api.py
+   ```
+   Server will start on http://localhost:5000
+
+2. **Start Frontend Development Server**
+   ```bash
+   cd frontend
+   npm start
+   ```
+   Application will open at http://localhost:3000
+
+## Model Configuration
+
+The system uses Google Gemini models exclusively. You can easily switch between different Gemini models through environment variables:
+
+### Available Google Models
+
+- `gemini-2.0-flash-exp` - Latest experimental Flash model  
+- `gemini-2.0-flash` - Stable Flash model (Default)
+- `gemini-1.5-pro` - Production-ready pro model
+- `gemini-1.5-flash` - Fast, efficient model
+- `gemini-1.0-pro` - Stable pro model
+
+### Switching Models
+
+Simply update your `.env` file:
 ```bash
-git clone https://github.com/arnab013/RAGChabot.git
-cd RAGChabot
-
-# Create a virtual environment
-python -m venv ragbot
-ragbot\Scripts\activate  # Windows
-# source ragbot/bin/activate  # Linux/Mac
-
-# Install Python dependencies
-pip install -r requirements.txt
+# Switch to a different Google model
+GOOGLE_MODEL=gemini-1.5-pro
 ```
 
-**2. Configure API Keys**
+Restart the application to apply changes.
 
-Create a `.env` file in the project root:
+## API Endpoints
 
-```env
-MISTRAL_API_KEY=your_mixtral_api_key_here
-SECRET_KEY=your_flask_secret_key_here
+### Chat Endpoint
+**POST** `/api/chat`
+
+**Request:**
+```json
+{
+  "message": "Your query here"
+}
 ```
 
-You can get your Mistral API key from the [Mistral AI Platform](https://console.mistral.ai/). The SECRET_KEY can be any random string for session management.
-
-**3. Prepare Your Data**
-
-Place your patent dataset as `final_dataset.csv` in the project root, then build the search index:
-
-```bash
-python -m src.embed_build final_dataset.csv
+**Response:**
+```json
+{
+  "message": {
+    "type": "text|semantic_text|chart_text",
+    "content": {
+      "title": "Response Title",
+      "body": "Response content...",
+      "matched_chunks": [] // For semantic_text type
+    }
+  },
+  "session_id": "uuid",
+  "query_types": ["conversation"],
+  "classification": {
+    "detected_types": ["CONVERSATION"],
+    "confidence": 0.99,
+    "reasoning": "Classification explanation"
+  }
+}
 ```
 
-**4. Start the Application**
+### Other Endpoints
+- **GET** `/api/history` - Get conversation history
+- **GET** `/api/session-info` - Get session information
 
-Run the backend (Flask API):
-```bash
-cd src
-python api.py
-```
-The backend will start on `http://localhost:5000`
+## Configuration
 
-In a new terminal, run the frontend (React):
-```bash
-cd frontend
-npm install
-npm start
-```
-The frontend will start on `http://localhost:3000`
+### Database
+The system uses SQLite with pre-embedded patent chunks. The database should be located at `data/patents.db`.
 
-Visit `http://localhost:3000` to start chatting with GoalDigger.
+### Embedding Model
+Uses remote embedding API with sentence-transformers model for consistency with pre-embedded data.
 
-**Tip**: Keep both terminal windows open to monitor logs from both the backend and frontend.
+### LLM Configuration
+Configured to use Mistral AI's open-mixtral-8x22b model for response generation.
 
-## How to Use GoalDigger
+## Production Deployment
 
-GoalDigger is designed to understand natural language queries about patents. Here are some examples of what you can ask:
+### Backend Deployment
+1. Use a production WSGI server (e.g., Gunicorn):
+   ```bash
+   pip install gunicorn
+   gunicorn -w 4 -b 0.0.0.0:5000 src.api:app
+   ```
 
-### Database Questions
-```
-"How many patents are in the database?"
-"Show me patents by country distribution"
-"What technologies are covered in the database?"
-"Give me a breakdown of patents by year"
-"Who are the top inventors in the database?"
-"Which companies have the most patents?"
-"Show me patent trends by decade"
-"How many patents relate to each SDG?"
-```
+2. Set up reverse proxy (nginx recommended)
+3. Configure environment variables for production
+4. Enable logging and monitoring
 
-### Patent Research
-```
-"Find patents related to SDG 6 water purification in Africa"
-"Show me SDG 7 renewable energy patents from 2020-2024"
-"Patents by Tesla on battery technology and energy storage"
-"What are the latest innovations in carbon capture and storage?"
-"Patents about artificial intelligence in healthcare applications"
-"Search for patents on sustainable agriculture techniques"
-"Find solar panel efficiency patents from German inventors"
-```
+### Frontend Deployment
+1. Build production bundle:
+   ```bash
+   cd frontend
+   npm run build
+   ```
 
-### Technical Analysis
-```
-"How can I innovate on patent EP1234567?"
-"Summarize the claims of this patent"
-"What's the prior art for patent EP7654321?"
-"Who are the inventors of this technology?"
-"Explain the SDG relevance of these patents"
-```
+2. Serve static files with nginx or CDN
+3. Configure API proxy settings for production backend
 
-### Casual Conversation
-```
-"Hi GoalDigger, how are you today?"
-"What's your expertise area?"
-"Thanks for the detailed analysis!"
-"Can you help me understand patent landscapes?"
-"What makes you different from other chatbots?"
-"How do you stay so knowledgeable about patents?"
-```
-
-## How the System Works
-
-The application is built with a React frontend that communicates with a Flask API backend. The backend processes queries through a RAG pipeline that combines patent database search with language model generation.
-
-```
-React Frontend ←→ Flask API ←→ RAG Pipeline
-                        ↓
-                  Conversation History ←→ Patent Database
-                                              ↓
-                                        FAISS Index
-                                        Patent CSV
-                                        Embeddings
-```
-
-### Project Structure
-
-```
-RAGChabot/
-├── frontend/                   # React application
-│   ├── src/
-│   │   ├── components/         # Chat interface components
-│   │   ├── App.js             # Main application
-│   │   └── index.css          # Tailwind styles
-│   ├── package.json           # Node dependencies
-│   └── tailwind.config.js     # Tailwind configuration
-│
-├── src/                       # Python backend
-│   ├── api.py                 # Flask REST API
-│   ├── pipeline.py            # RAG orchestration
-│   ├── retrieval.py           # FAISS search engine
-│   ├── llm_clients.py         # Mixtral integration
-│   ├── query_rewrite.py       # Query preprocessing
-│   ├── summarise.py           # Response generation
-│   ├── embed_build.py         # Index building
-│   ├── stats_engine.py        # Analytics engine
-│   └── config.py              # Configuration
-│
-├── embeddings/                # Search index files
-│   ├── faiss_chunks.idx       # FAISS vector index
-│   ├── patents.parquet        # Processed patent data
-│   └── meta.pkl               # Metadata cache
-│
-├── final_dataset.csv          # Raw patent dataset
-├── requirements.txt           # Python dependencies
-├── .env                       # Environment variables
-└── README.md                  # Documentation
-```
-
----
-
-## ⚡ Performance & Optimization
-
-### Database Size Recommendations
-- **Small datasets** (< 1,000 patents): Instant responses
-- **Medium datasets** (1,000 - 10,000 patents): < 2 second responses
-- **Large datasets** (> 10,000 patents): 2-5 second responses
-- **Very large datasets** (> 100,000 patents): Consider chunking or distributed setup
-
-### Response Time Optimization
-- **Vector search**: Usually < 100ms with FAISS
-- **LLM generation**: 1-4 seconds depending on response length
-- **Statistics queries**: < 500ms for most aggregations
-- **Context retrieval**: Minimal overhead with session management
-
-### Memory Usage
-- **Base application**: ~200MB RAM
-- **FAISS index**: ~10MB per 1,000 patents
-- **LLM inference**: Handled by Mistral API (no local memory impact)
-- **Session storage**: ~1KB per active session
+### Security Considerations
+- Use HTTPS in production
+- Implement rate limiting
+- Secure API keys and environment variables
+- Configure CORS appropriately
+- Regular security updates
 
 ## Development
 
+### Project Structure
+```
+RAGChabot/
+├── src/                    # Backend source code
+│   ├── api.py             # Main Flask application
+│   ├── query_classifier.py # Query classification logic
+│   ├── sql_retriever.py   # Database search functionality
+│   ├── llm_clients.py     # LLM integration
+│   ├── config.py          # Configuration settings
+│   └── ...
+├── frontend/              # React frontend application
+│   ├── src/
+│   ├── public/
+│   └── package.json
+├── data/                  # Database and data files
+├── embeddings/           # Embedding models and indices
+├── requirements.txt      # Python dependencies
+└── README.md
+```
+
 ### Adding New Features
-
-To modify the system:
-1. Backend changes go in the `src/` directory
-2. Frontend updates are made in `frontend/src/components/`
-3. Database query extensions should be added to `get_database_stats()` in `pipeline.py`
-4. New LLM capabilities can be implemented by updating prompts in `llm_clients.py`
-
-### Testing
-
-```bash
-# Test backend components
-python -c "from src.pipeline import RAGPipeline; print('Backend OK')"
-
-# Test API endpoints
-python -c "from src.api import app; print('API OK')"
-
-# Test frontend build
-cd frontend && npm run build
-
-# Test database statistics
-python -c "from src.pipeline import RAGPipeline; r = RAGPipeline('final_dataset.csv'); print(r.get_database_stats())"
-```
-
-### Common Issues
-
-**Import errors**: Make sure you're in the correct directory and your virtual environment is activated.
-
-**Missing API key**: Check that your `.env` file exists and contains a valid `MISTRAL_API_KEY`.
-
-**Port conflicts**: If ports 3000 or 5000 are in use, you can change them in `package.json` (React) or `api.py` (Flask).
-
-**FAISS index missing**: Run `python -m src.embed_build final_dataset.csv` to rebuild the search index.
-
-**Frontend build issues**: Try `npm cache clean --force` followed by `npm install`.
-
-### Production Deployment
-
-1. Build the frontend: `cd frontend && npm run build`
-2. Set production environment variables in your `.env` file
-3. Deploy using your preferred hosting service (Heroku, AWS, etc.)
-
-## Advanced Usage
-
-### Custom Datasets
-
-GoalDigger works with patent datasets containing these columns:
-- `title_en` or `title`: Patent titles
-- `abstract_text`: Patent abstracts  
-- `publication_date`: Publication dates (YYYY-MM-DD format)
-- `applicant_names`: Company/organization names
-- `inventor_names`: Inventor information
-- `sdg_number`: SDG classifications (optional)
-- `publication_number`: Patent numbers (optional, for EP formatting)
-
-**Data Requirements:**
-- CSV format with headers
-- UTF-8 encoding recommended
-- At least 100 patents for meaningful statistics
-- Date format: YYYY-MM-DD or YYYY
-
-### API Integration
-
-The Flask API provides REST endpoints for integration:
-
-**Chat Endpoint:**
-```bash
-POST /api/chat
-Content-Type: application/json
-
-{
-    "query": "How many patents are in the database?",
-    "session_id": "user-session-123"
-}
-```
-
-**Response Format:**
-```json
-{
-    "response": "Database Overview\n\nI currently have access to 15,847 patents in my database...",
-    "session_id": "user-session-123",
-    "timestamp": "2024-01-15T10:30:00Z"
-}
-```
-
-**Health Check:**
-```bash
-GET /api/health
-```
-
-**Session Management:**
-- Sessions automatically expire after 1 hour of inactivity
-- Context is maintained for up to 10 previous messages per session
-- Use consistent `session_id` for conversation continuity
-
-## Contributing
-
-We welcome contributions to improve GoalDigger. Here's how you can help:
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes and test them
-4. Commit your changes: `git commit -m 'Add amazing feature'`
-5. Push to the branch: `git push origin feature/amazing-feature`
-6. Open a Pull Request
+1. **Query Types**: Extend `query_classifier.py` for new query classifications
+2. **Response Types**: Add new response formatters in `api.py`
+3. **Frontend Components**: Create new React components for response rendering
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+[Add your license information here]
 
 ## Support
 
-- **Developer**: Arnab Saha
-- **Issues**: [GitHub Issues](https://github.com/arnab013/RAGChabot/issues)
-- **Documentation**: See inline code comments and this README
-
-## Acknowledgments
-
-Thanks to the following projects and communities that made GoalDigger possible:
-
-- Mixtral AI for powerful language model capabilities
-- FAISS for efficient vector search and similarity matching
-- React and Tailwind CSS for the modern, responsive user interface
-- Flask for lightweight and flexible API development
-- The open source community for supporting tools and libraries
-
----
-
-*Version 2.0 - Built for advancing patent research and sustainable development*
+[Add support/contact information here]

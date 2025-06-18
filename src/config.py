@@ -8,11 +8,26 @@ EMB_DIR  = BASE_DIR / "embeddings"
 
 load_dotenv()
 
-MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
-MISTRAL_ENDPOINT = "https://api.mistral.ai/v1/chat/completions"  # :contentReference[oaicite:0]{index=0}
+# LLM Configuration
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-# Mixtral model names (update if you have access to a newer suffix)
-MIXTRAL_MODEL = "open-mixtral-8x22b"
+# LLM Provider Selection (Google only)
+LLM_PROVIDER = "google"
 
-# embedding model
-EMB_MODEL_NAME = "sentence-transformers/all-mpnet-base-v2"
+# Model Configuration (configurable via .env)
+GOOGLE_MODEL = os.getenv("GOOGLE_MODEL", "gemini-2.0-flash-exp")
+
+# Google Gemini Configuration  
+GOOGLE_ENDPOINT = f"https://generativelanguage.googleapis.com/v1beta/models/{GOOGLE_MODEL}:generateContent"
+
+# --- Embedding Model Configuration ---
+LOCAL_MODEL_DIRECTORY = "E:\\Projects\\CodeFest_Summer_2025\\RAGBOT\\RAGChabot\\embeddings\\single_dense"
+EMBEDDING_DIMENSION = 1024  # Confirmed dimension
+
+# --- Remote Embedding API Configuration ---
+REMOTE_EMBEDDING_URL = os.getenv("REMOTE_EMBEDDING_URL", "https://api.confusedelectrons.xyz/embed-query-w-sentence-transformers/")
+REMOTE_EMBEDDING_API_KEY = os.getenv("REMOTE_EMBEDDING_API_KEY")  # Optional, can be None
+
+# --- Port Configuration ---
+BACKEND_PORT = int(os.getenv("BACKEND_PORT", 5000))
+FRONTEND_PORT = int(os.getenv("FRONTEND_PORT", 3001))

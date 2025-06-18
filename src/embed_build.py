@@ -6,9 +6,27 @@ import faiss, pickle, numpy as np, pandas as pd
 from tqdm import tqdm
 import sys
 
-from config import EMB_MODEL_NAME, EMB_DIR
-from data_ingest import concat_text, TEXT_COLS
+try:
+    from config import EMB_MODEL_NAME, EMB_DIR
+except ImportError:
+    from .config import EMB_MODEL_NAME, EMB_DIR
+
 from token_utils import count_tokens
+
+# Define text columns and concatenation function inline
+TEXT_COLS = ["title", "abstract", "description", "claims"]  # Common patent text fields
+
+def concat_text(row, cols=None):
+    """Concatenate text from specified columns."""
+    if cols is None:
+        cols = TEXT_COLS
+    
+    text_parts = []
+    for col in cols:
+        if col in row and pd.notna(row[col]) and str(row[col]).strip():
+            text_parts.append(str(row[col]).strip())
+    
+    return " ".join(text_parts)
 
 def iter_chunks(text: str, max_tokens: int = 512, overlap: int = 64):
     words = text.split()
@@ -23,7 +41,22 @@ def build_index(df: pd.DataFrame,
     Build FAISS index on text chunks (for fine-grained recall),
     and persist both the index and the original DataFrame.
     """
-    model   = SentenceTransformer(EMB_MODEL_NAME)
+    import torch
+    import os
+    from config import LOCAL_MODEL_DIRECTORY
+    
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    print(f"🔥 Using device: {device}")
+    
+    # Try to use local model first, fallback to EMB_MODEL_NAME
+    if os.path.exists(LOCAL_MODEL_DIRECTORY):
+        print(f"📁 Using local model: {LOCAL_MODEL_DIRECTORY}")
+        model = SentenceTransformer(LOCAL_MODEL_DIRECTORY, device=device)
+    else:
+        print(f"📁 Using fallback model: {EMB_MODEL_NAME}")
+        model = SentenceTransformer(EMB_MODEL_NAME, device=device)
+    
+    print(f"✅ Model loaded on device: {model.device}")
     all_embs, meta = [], []
 
     print("🔨  Encoding chunks …")

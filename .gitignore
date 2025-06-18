@@ -7,3 +7,46 @@ embeddings/
 *.parquet      
 *.pkl          
 *.log          
+
+# Test and debug files
+test_*.py
+debug_*.py
+demo_*.py
+check_*.py
+benchmark_*.py
+final_*.py
+recreate_*.py
+migrate_*.py
+start_production.py
+
+# Version files and duplicates  
+*_new.py
+*_old.py
+*_fixed.py
+*_clean.py
+*_test.py
+*_debug.py
+
+# Documentation files
+*COMPLETE.md
+*SUMMARY.md
+README_new.md
+
+# Frontend test files
+frontend/src/Test*.js
+
+# Temporary and backup files
+*.tmp
+*.bak
+*.backup
+*~
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,32 +1,188 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, Menu, X, Search, BarChart3, MessageSquare, FileText } from 'lucide-react';
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
 import axios from 'axios';
 
-const ChatInterface = () => {
-  const [messages, setMessages] = useState([
+// Configure axios to send cookies with requests
+axios.defaults.withCredentials = true;
+
+// Welcome message constant to avoid duplication
+const WELCOME_MESSAGE = 'Hello there. I am here to dig into Sustainable Development Goals for Patents with you. What do you want to start the digging with?';
+
+// Example prompts organized by category
+const examplePrompts = [
+  {
+    category: "Patent Search",
+    icon: "Search",
+    prompts: [
+      "Find patents about solar energy storage",
+      "Show me patents related to water purification",
+      "Search for patents about sustainable agriculture",
+      "Find patents about electric vehicle batteries",
+      "Look for patents on renewable energy systems",
+      "Show patents about carbon capture technology"
+    ]
+  },  {
+    category: "Bar Charts & Analytics",
+    icon: "BarChart3", 
+    prompts: [
+      "Show me patent publication trends by year",
+      "Which SDG has the most patents?",
+      "Show SDG distribution across patents",
+      "What are the top technology fields?",
+      "Show top 10 inventors by patent count",
+      "Display patent counts by country",
+      "Show technology analysis by IPC classification",
+      "Who are the most prolific assignees?"
+    ]
+  },  {
+    category: "Line Charts & Trends",
+    icon: "BarChart3",
+    prompts: [
+      "Show patent publication trends in last 12 months",
+      "Display publication trends for the last 6 months",
+      "Show publication trends in 2023",
+      "Compare patent publication trends in 2020 and 2021",
+      "Show SDG patent trends over time",
+      "Plot patent filing trends by technology",
+      "Compare trends between 2019 and 2022",
+      "Show publication trends in the last 24 months"
+    ]
+  },  {
+    category: "Enhanced Analytics",
+    icon: "TrendingUp",
+    prompts: [
+      "Compare patent publication trends in 2020 and 2000", 
+      "Show me patent publication trends in last 12 months",
+      "What are the top 5 inventors?",
+      "Show geographical distribution of patents",
+      "Technology analysis by IPC sections",
+      "Top assignees and their patent counts",
+      "Patents by applicant countries",
+      "Show IPC classification distribution"
+    ]
+  },
+  {
+    category: "Pie Charts & Distribution",
+    icon: "BarChart3",
+    prompts: [
+      "Show percentage distribution of patents by SDG",
+      "What's the proportion of patents by technology type?",
+      "Display patent distribution by geographic region",
+      "Show breakdown of renewable vs non-renewable patents",
+      "What percentage of patents are in each category?",
+      "Show distribution of patents by filing organization"
+    ]
+  },
+  {
+    category: "Area Charts & Volume",
+    icon: "BarChart3",
+    prompts: [
+      "Show cumulative patent growth over time",
+      "Display overlapping SDG patent volumes",
+      "Show stacked patent trends by technology",
+      "Plot cumulative innovation in clean energy",
+      "Display overlapping patent categories over time",
+      "Show volume growth in different research areas"
+    ]
+  },
+  {
+    category: "Advanced Visualizations",
+    icon: "BarChart3",
+    prompts: [
+      "Create a treemap of patent technology categories",
+      "Show stacked bar chart of SDG patents by year",
+      "Display hierarchical view of patent classifications",
+      "Create a comparative analysis of patent volumes",
+      "Show multi-dimensional patent data visualization",
+      "Display complex patent relationship mappings"
+    ]
+  },  {
+    category: "SDG Analysis", 
+    icon: "FileText",
+    prompts: [
+      "Which patents contribute to SDG 7 (Clean Energy)?",
+      "Show patents related to SDG 6 (Clean Water)",
+      "Find SDG 13 (Climate Action) patents",
+      "How do patents map to SDG 3 (Good Health)?",
+      "Show SDG 9 (Industry Innovation) patents",
+      "Which patents support SDG 2 (Zero Hunger)?",
+      "Show SDG distribution with percentages",
+      "SDG trends over the last 5 years"
+    ]
+  },
+  {
+    category: "Conversational",
+    icon: "MessageSquare",
+    prompts: [
+      "What can you help me with?",
+      "Explain how patents relate to SDGs",
+      "How does this patent search system work?",
+      "What types of charts can you generate?",
+      "Tell me about the database coverage",
+      "How are patents classified by SDG?"
+    ]
+  }
+];
+
+const ChatInterface = () => {  const [messages, setMessages] = useState([
     {
       id: '1',
-      content: 'Hello there. I am here to dig into Sustainable Development Goals for Patents with you. What do you want to start the digging with?',
+      content: WELCOME_MESSAGE,
       sender: 'ai',
       timestamp: new Date(Date.now() - 60000),
     }
   ]);
   const [inputValue, setInputValue] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [sessionId, setSessionId] = useState(null);
+  const [isThinking, setIsThinking] = useState(false);
+  const [sessionInfo, setSessionInfo] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  // Load session info on component mount
+  useEffect(() => {    loadSessionInfo();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  
+  const loadSessionInfo = async () => {
+    try {
+      // Our backend might not have a session-info endpoint, so we'll handle that case
+      try {
+        const response = await axios.get('/api/session-info');
+        setSessionInfo(response.data);
+      } catch (err) {
+        console.log('Session info endpoint not available, using default session info');
+        // Just use a default value
+        setSessionInfo({
+          message_count: messages.filter(m => m.sender === 'user').length
+        });
+      }
+    } catch (error) {
+      console.error('Error loading session info:', error);
+    }
+  };
+  const clearSession = async () => {
+    try {
+      await axios.post('/api/reset');      setMessages([
+        {
+          id: '1',
+          content: WELCOME_MESSAGE,
+          sender: 'ai',
+          timestamp: new Date(),
+        }
+      ]);
+      await loadSessionInfo();
+    } catch (error) {
+      console.error('Error clearing session:', error);
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isTyping]);
-
+  }, [messages, isThinking]);
   const sendMessage = async () => {
     if (!inputValue.trim()) return;
 
@@ -35,23 +191,49 @@ const ChatInterface = () => {
       content: inputValue,
       sender: 'user',
       timestamp: new Date(),
-    };
-
-    setMessages(prev => [...prev, userMessage]);
+    };    setMessages(prev => [...prev, userMessage]);
     setInputValue('');
-    setIsTyping(true);
-
-    try {
-      const response = await axios.post('/api/chat', { query: inputValue });
+    setIsThinking(true);
+    
+    try {      // No need to send session_id anymore - Flask handles it via cookies
+      const response = await axios.post('/api/search', { 
+        query: inputValue 
+      });
+      
+      console.log('API Response:', response.data);
+      
+      // Process chart data if available
+      let chartData = null;
+      if (response.data.chart) {
+        console.log('Chart data found in response:', response.data.chart);
+        chartData = response.data.chart;
+      } else if (
+        response.data.message && 
+        typeof response.data.message === 'object' && 
+        response.data.message.type === 'chart_text' &&
+        response.data.message.content &&
+        response.data.message.content.chart_data
+      ) {
+        console.log('Chart data found in message content:', response.data.message.content.chart_data);
+        chartData = {
+          type: response.data.message.content.chart_config?.type || 'line',
+          title: response.data.message.content.chart_config?.title || 'Patent Statistics',
+          data: response.data.message.content.chart_data
+        };
+      }
       
       const aiMessage = {
         id: (Date.now() + 1).toString(),
-        content: response.data.response,
+        content: response.data.message, // Keep the full structured response
         sender: 'ai',
         timestamp: new Date(),
+        chartData: chartData, // Include chart data if available
       };
 
       setMessages(prev => [...prev, aiMessage]);
+      
+      // Update session info after successful message
+      await loadSessionInfo();
     } catch (error) {
       console.error('Error:', error);
       const errorMessage = {
@@ -59,10 +241,9 @@ const ChatInterface = () => {
         content: 'I apologize, but I encountered an error processing your message. Please try again.',
         sender: 'ai',
         timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      };      setMessages(prev => [...prev, errorMessage]);
     } finally {
-      setIsTyping(false);
+      setIsThinking(false);
     }
   };
 
@@ -84,37 +265,120 @@ const ChatInterface = () => {
     adjustTextareaHeight();
   }, [inputValue]);
 
-  return (
-    <div className="flex flex-col h-screen max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex-shrink-0 bg-white/80 backdrop-blur-sm border-b border-gray-200/50 px-6 py-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">            <img 
-              src={process.env.PUBLIC_URL + '/robot.png'} 
-              alt="GoalDigger" 
-              className="w-6 h-6 rounded-full"
-            />
-          </div>          <div>
-            <h1 className="text-xl font-semibold text-gray-900">GoalDigger</h1>
-            <p className="text-sm text-gray-500">
-              {isTyping ? 'Typing...' : 'Online'}
-            </p>
-          </div>
-        </div>
-      </div>
+  const handlePromptSelect = (prompt) => {
+    setInputValue(prompt);
+    setIsSidebarOpen(false);
+    // Focus the input after a brief delay to ensure the sidebar animation completes
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 100);
+  };
 
-      {/* Messages Area */}
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+  const getIcon = (iconName) => {
+    const iconProps = { size: 16, className: "text-gray-400" };
+    switch (iconName) {
+      case 'Search': return <Search {...iconProps} />;
+      case 'BarChart3': return <BarChart3 {...iconProps} />;
+      case 'FileText': return <FileText {...iconProps} />;
+      case 'MessageSquare': return <MessageSquare {...iconProps} />;
+      default: return <MessageSquare {...iconProps} />;
+    }
+  };
+  return (
+    <div className="flex flex-col h-screen max-w-7xl mx-auto relative">      {/* Header */}
+      <div className="flex-shrink-0 bg-gray-800/90 backdrop-blur-sm border-b border-gray-700/50 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
+              <img 
+                src={process.env.PUBLIC_URL + '/robot.png'} 
+                alt="GoalDigger" 
+                className="w-6 h-6 rounded-full"
+              />
+            </div>            <div>
+              <h1 className="text-xl font-semibold text-white">GoalDigger</h1>              <p className="text-sm text-gray-300">
+                {isThinking ? 'Thinking...' : `Online${sessionInfo ? ` • ${sessionInfo.message_count} messages` : ''}`}
+              </p>
+            </div>
+          </div>
+            {/* Session controls */}          <div className="flex items-center space-x-2">
+            <button
+              onClick={toggleSidebar}
+              className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+              title="Example prompts"
+            >
+              <Menu size={20} />
+            </button>
+            {sessionInfo && sessionInfo.message_count > 0 && (
+              <button
+                onClick={clearSession}
+                className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                title="Clear conversation"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            )}
+          </div></div>
+      </div>      {/* Sidebar with Example Prompts */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40" 
+          onClick={toggleSidebar}
+        />
+      )}
+        <div className={`fixed top-0 right-0 h-full w-80 bg-gray-800 shadow-xl transform transition-transform duration-300 ease-in-out z-50 ${
+        isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
+      }`}>
+        <div className="flex items-center justify-between p-4 border-b border-gray-700">
+          <h2 className="text-lg font-semibold text-white">Example Prompts</h2>
+          <button
+            onClick={toggleSidebar}
+            className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+        
+        <div className="p-4 h-full overflow-y-auto pb-20">
+          {examplePrompts.map((category, categoryIndex) => (
+            <div key={categoryIndex} className="mb-6">
+              <div className="flex items-center space-x-2 mb-3">
+                {getIcon(category.icon)}
+                <h3 className="text-sm font-medium text-gray-300">{category.category}</h3>
+              </div>
+              <div className="space-y-2">
+                {category.prompts.map((prompt, promptIndex) => (
+                  <button
+                    key={promptIndex}
+                    onClick={() => handlePromptSelect(prompt)}
+                    className="w-full text-left p-3 text-sm text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors border border-gray-600 hover:border-gray-500"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>      {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
         {messages.map((message) => (
           <MessageBubble key={message.id} message={message} />
         ))}
         
-        {isTyping && <TypingIndicator />}
+        {isThinking && <TypingIndicator />}
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input Area */}
-      <div className="flex-shrink-0 bg-white/80 backdrop-blur-sm border-t border-gray-200/50 px-6 py-4">
+      <div className="flex-shrink-0 bg-gray-800/90 backdrop-blur-sm border-t border-gray-700/50 px-6 py-4">
         <div className="flex items-end space-x-4 max-w-3xl mx-auto">
           <div className="flex-1 relative">
             <textarea
@@ -123,24 +387,24 @@ const ChatInterface = () => {
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Type your message..."
-              className="w-full resize-none bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 pr-12
-                       focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white
-                       transition-all duration-200 placeholder-gray-500 text-gray-900
+              className="w-full resize-none bg-gray-700 border border-gray-600 rounded-2xl px-4 py-3 pr-12
+                       focus:ring-2 focus:ring-cyan-400 focus:border-transparent focus:bg-gray-600
+                       transition-all duration-200 placeholder-gray-400 text-white
                        min-h-[48px] max-h-[120px] leading-relaxed"
               rows={1}
-              disabled={isTyping}
+              disabled={isThinking}
               style={{ height: '48px' }}
             />
             <button
               onClick={sendMessage}
-              disabled={!inputValue.trim() || isTyping}
-              className="absolute right-3 bottom-3 p-2 bg-gradient-to-r from-blue-500 to-purple-600 
-                       text-white rounded-xl hover:from-blue-600 hover:to-purple-700
-                       disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-blue-500 
-                       disabled:hover:to-purple-600 transform transition-all duration-200 
+              disabled={!inputValue.trim() || isThinking}
+              className="absolute right-3 bottom-3 p-2 bg-gradient-to-r from-cyan-400 to-blue-500 
+                       text-white rounded-xl hover:from-cyan-500 hover:to-blue-600
+                       disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-cyan-400 
+                       disabled:hover:to-blue-500 transform transition-all duration-200 
                        hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
             >
-              {isTyping ? (
+              {isThinking ? (
                 <Loader2 size={18} className="animate-spin" />
               ) : (
                 <Send size={18} />

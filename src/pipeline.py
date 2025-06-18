@@ -5,14 +5,48 @@ from collections import Counter
 from collections import deque
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+import os
+import sys
 
 import pandas as pd
 
-from query_rewrite    import rewrite
-from retrieval        import PassageRetriever
-from filter_ops       import apply_filter
-from stats_engine     import top_k_group, group_by_year
-from summarise        import map_reduce_summarise
+# Add the project root to the Python path if the module isn't found
+try:
+    from query_rewrite import rewrite
+    from stats_engine import top_k_group, group_by_year
+    from summarise import map_reduce_summarise
+except ModuleNotFoundError:
+    # Try with src prefix
+    try:
+        from src.query_rewrite import rewrite
+        from src.stats_engine import top_k_group, group_by_year
+        from src.summarise import map_reduce_summarise
+    except ModuleNotFoundError:
+        # Add parent directory to path for imports
+        sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+        from src.query_rewrite import rewrite
+        from src.stats_engine import top_k_group, group_by_year
+        from src.summarise import map_reduce_summarise
+
+# Define filter function inline to remove filter_ops dependency
+def apply_filter(row_val, op, value):
+    """Apply filter operation on row value."""
+    row_text = str(row_val).lower()
+    
+    if op == "eq":
+        return str(row_val) == str(value)
+    elif op == "neq":
+        return str(row_val) != str(value)
+    elif op == "contains":
+        return str(value).lower() in row_text
+    elif op == "startswith":
+        return row_text.startswith(str(value).lower())
+    elif op == "in":
+        if isinstance(value, (list, tuple)):
+            return any(str(v).lower() in row_text for v in value)
+        return str(value).lower() in row_text
+    else:
+        return True  # Unknown operation, don't filter
 from llm_clients      import chat
 from token_utils      import count_tokens
 
@@ -25,7 +59,7 @@ class RAGPipeline:
     aggregation, and multi-stage passage-RAG fallbacks."""
 
     def __init__(self,
-                 retriever: PassageRetriever,
+                 retriever,  # Accept any retriever type (PassageRetriever or SQLRetriever)
                  max_history: int = 5,
                  debug: bool     = False):
         self.retriever        = retriever

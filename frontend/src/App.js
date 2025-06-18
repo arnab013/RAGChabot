@@ -1,11 +1,16 @@
 import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import ChatInterface from './components/ChatInterface';
 
 function App() {
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
-      <ChatInterface />
-    </div>
+    <Router>
+      <div className="h-screen bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900">
+        <Routes>
+          <Route path="/" element={<ChatInterface />} />
+        </Routes>
+      </div>
+    </Router>
   );
 }
 

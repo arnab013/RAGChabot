@@ -1,6 +1,18 @@
 import json, re
 from typing import List, Dict
-from llm_clients import chat
+import os
+import sys
+
+# Add the project root to the Python path if the module isn't found
+try:
+    from llm_clients import chat
+except ModuleNotFoundError:
+    try:
+        from src.llm_clients import chat
+    except ModuleNotFoundError:
+        # Add parent directory to path for imports
+        sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+        from src.llm_clients import chat
 
 WHITELIST = [
     "publication_number", "publication_kind", "publication_date", "ipc", "cpc",

@@ -2,8 +2,46 @@ import pandas as pd
 from pathlib import Path
 from sentence_transformers import SentenceTransformer
 from typing import Any, Dict, List, Sequence, Union
-from config import EMB_MODEL_NAME, EMB_DIR
-from filter_ops import apply_filter
+import os
+import sys
+
+# Add the project root to the Python path if the module isn't found
+try:
+    from config import EMB_MODEL_NAME, EMB_DIR
+except ModuleNotFoundError:
+    # If running as module from src, use relative import
+    try:
+        from src.config import EMB_MODEL_NAME, EMB_DIR
+    except ModuleNotFoundError:
+        # Add parent directory to path for imports
+        sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+        from src.config import EMB_MODEL_NAME, EMB_DIR
+
+try:
+    from filter_ops import apply_filter
+except ModuleNotFoundError:
+    try:
+        from src.filter_ops import apply_filter
+    except ModuleNotFoundError:
+        # Define filter function inline to remove dependency
+        def apply_filter(row_val, op, value):
+            """Apply filter operation on row value."""
+            row_text = str(row_val).lower()
+            
+            if op == "eq":
+                return str(row_val) == str(value)
+            elif op == "neq":
+                return str(row_val) != str(value)
+            elif op == "contains":
+                return str(value).lower() in row_text
+            elif op == "startswith":
+                return row_text.startswith(str(value).lower())
+            elif op == "in":
+                if isinstance(value, (list, tuple)):
+                    return any(str(v).lower() in row_text for v in value)
+                return str(value).lower() in row_text
+            else:
+                return True  # Unknown operation, don't filter
 
 
 class PassageRetriever:
@@ -39,8 +77,10 @@ class PassageRetriever:
             self.meta = pickle.load(f)
 
         # 3) init encoder for on-the-fly queries
-
-        self.model = SentenceTransformer(EMB_MODEL_NAME)
+        import torch
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        print(f"🔥 PassageRetriever using device: {device}")
+        self.model = SentenceTransformer(EMB_MODEL_NAME, device=device)
 
 
     # ------------- helpers ------------------------------------------------
