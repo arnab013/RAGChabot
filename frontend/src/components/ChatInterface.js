@@ -371,7 +371,7 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
         </div>
       </div>      {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-6 py-6">
-        <div className="max-w-3xl mx-auto space-y-6">
+        <div className="max-w-[772px] mx-auto space-y-6">
           {messages.map((message) => (
             <MessageBubble key={message.id} message={message} />
           ))}
@@ -383,7 +383,7 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
 
       {/* Input Area */}
       <div className="flex-shrink-0 bg-gray-800/90 backdrop-blur-sm border-t border-gray-700/50 px-6 py-4">
-        <div className="flex items-end space-x-4 max-w-3xl mx-auto">
+        <div className="flex items-end space-x-4 max-w-[772px] mx-auto">
           <div className="flex-1 relative chat-input-container">
             <textarea
               ref={inputRef}
