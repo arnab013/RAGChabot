@@ -7,6 +7,12 @@ from database.config import get_db_session_simple
 from database.models import Patent
 import logging
 
+# Import LLM for dynamic insight generation
+try:
+    from llm_clients import chat
+except ImportError:
+    from .llm_clients import chat
+
 logger = logging.getLogger(__name__)
 
 
@@ -25,6 +31,82 @@ class BaseQueryHandler(ABC):
     def get_query_keywords(self) -> List[str]:
         """Return keywords that identify this query type"""
         pass
+    
+    def generate_dynamic_insights(self, query: str, chart_data: Dict, data_summary: str) -> Dict[str, str]:
+        """Generate dynamic insights and takeaways using LLM based on chart data"""
+        try:
+            # Prepare chart data summary for LLM
+            chart_type = chart_data.get('type', 'unknown')
+            chart_title = chart_data.get('title', 'Data Analysis')
+            
+            # Extract key data points
+            data_points = []
+            if 'data' in chart_data and 'labels' in chart_data['data'] and 'datasets' in chart_data['data']:
+                labels = chart_data['data']['labels']
+                datasets = chart_data['data']['datasets']
+                
+                if datasets and len(datasets) > 0:
+                    values = datasets[0].get('data', [])
+                    for i, label in enumerate(labels[:min(len(labels), len(values))]):
+                        if i < len(values):
+                            data_points.append(f"{label}: {values[i]}")
+            
+            # Construct LLM prompt
+            prompt = f"""Based on the following patent data analysis, generate concise and insightful insights and takeaways:
+
+Query: {query}
+Chart Type: {chart_type}
+Chart Title: {chart_title}
+Data Summary: {data_summary}
+Key Data Points: {', '.join(data_points[:8])}
+
+Please provide:
+1. A brief insight (1-2 sentences) highlighting the most important trend or pattern in the data
+2. A practical takeaway (1-2 sentences) explaining what this means for innovation strategy or business decisions
+
+Format your response as JSON:
+{{
+    "insight": "Your insight here",
+    "takeaway": "Your takeaway here"
+}}"""
+
+            messages = [{"role": "user", "content": prompt}]
+            
+            # Call LLM
+            response = chat(messages, temperature=0.3, max_tokens=200)
+            
+            # Parse LLM response
+            import json
+            try:
+                parsed_response = json.loads(response)
+                return {
+                    "insight": parsed_response.get("insight", "This chart shows interesting patterns in the patent data."),
+                    "takeaway": parsed_response.get("takeaway", "These insights can inform strategic innovation decisions.")
+                }
+            except json.JSONDecodeError:
+                # Fallback if JSON parsing fails
+                lines = response.strip().split('\n')
+                insight = ""
+                takeaway = ""
+                
+                for line in lines:
+                    if '"insight"' in line.lower():
+                        insight = line.split(':', 1)[-1].strip().strip('",')
+                    elif '"takeaway"' in line.lower():
+                        takeaway = line.split(':', 1)[-1].strip().strip('",')
+                
+                return {
+                    "insight": insight or "This chart reveals important trends in the patent data.",
+                    "takeaway": takeaway or "These patterns can guide future innovation strategies."
+                }
+                
+        except Exception as e:
+            logger.warning(f"Failed to generate dynamic insights: {e}")
+            # Return fallback insights
+            return {
+                "insight": "This chart shows important patterns in the patent data worth analyzing further.",
+                "takeaway": "Use these trends to inform strategic decisions about innovation and research priorities."
+            }
     
     def close(self):
         """Close database session"""

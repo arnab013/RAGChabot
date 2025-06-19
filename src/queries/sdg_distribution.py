@@ -15,8 +15,7 @@ class SDGDistributionHandler(BaseQueryHandler):
         """Keywords that identify SDG distribution queries"""
         return [
             "sdg", "sdgs", "sustainable development", "sustainable development goals",
-            "distribution", "breakdown", "categories", "goals"
-        ]
+            "distribution", "breakdown", "categories", "goals"        ]
     
     def handle_query(self, query: str, **kwargs) -> QueryResponse:
         """Handle SDG distribution query"""
@@ -33,15 +32,18 @@ class SDGDistributionHandler(BaseQueryHandler):
             # Generate chart
             chart = self._generate_sdg_chart(sdg_data)
             
-            # Generate simple insight and takeaway
-            insight = "This chart shows the distribution of patents across SDGs."
-            takeaway = "Identify which SDGs are most addressed by recent patent activity."
+            # Generate dynamic insights using LLM
+            total_patents = sum(item['count'] for item in sdg_data)
+            top_sdg = sdg_data[0] if sdg_data else {'sdg': 'None', 'count': 0}
+            data_summary = f"SDG distribution across {len(sdg_data)} categories. Total patents: {total_patents}. Top SDG: {top_sdg['sdg']} with {top_sdg['count']} patents ({(top_sdg['count']/total_patents*100):.1f}% of total)."
+            insights = self.generate_dynamic_insights(query, chart, data_summary)
+            
             return QueryResponse(
                 message="\n".join(response_lines),
                 chart=chart,
                 data={'sdg_distribution': sdg_data},
-                insight=insight,
-                takeaway=takeaway
+                insight=insights["insight"],
+                takeaway=insights["takeaway"]
             )
             
         except Exception as e:

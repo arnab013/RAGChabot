@@ -44,6 +44,8 @@ class ApiResponse:
     message: str
     chart: Optional[Dict] = None
     error: Optional[str] = None
+    insight: Optional[str] = None
+    takeaway: Optional[str] = None
 
 # Initialize Flask app and configure CORS
 app = Flask(__name__)
@@ -150,7 +152,9 @@ def handle_stats(query: str, context: ConversationContext = None) -> ApiResponse
         if query_response and query_response.message:
             return ApiResponse(
                 message=query_response.message,
-                chart=query_response.chart
+                chart=query_response.chart,
+                insight=getattr(query_response, 'insight', ''),
+                takeaway=getattr(query_response, 'takeaway', '')
             )
         
         # Fallback to legacy handlers for queries not covered by modular system
@@ -601,7 +605,9 @@ def search():
         return jsonify({
             "message": response.message,
             "chart": response.chart,
-            "error": response.error
+            "error": response.error,
+            "insight": getattr(response, 'insight', ''),
+            "takeaway": getattr(response, 'takeaway', '')
         })
         
     except Exception as e:

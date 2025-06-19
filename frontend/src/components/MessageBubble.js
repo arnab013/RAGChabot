@@ -48,6 +48,49 @@ const MessageBubble = ({ message }) => {
       }
         // Check if this is a simple bot message (string content)
       if (typeof content === 'string') {
+        // Check if this message has chart data and insight/takeaway fields
+        if (chartData && (message.insight || message.takeaway)) {
+          // Create a structured response with insight and takeaway sections
+          return (
+            <div className="space-y-4">
+              {/* Main message content */}
+              <div className="text-[15px] leading-relaxed">
+                {formatTextContent(content)}
+              </div>
+              
+              {/* Key Insights Section */}
+              {message.insight && (
+                <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-400/20 rounded-lg p-4 mb-4">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    <h4 className="font-semibold text-blue-300 text-sm">Key Insights</h4>
+                  </div>
+                  <div className="text-gray-200 text-sm">
+                    {formatTextContent(message.insight)}
+                  </div>
+                </div>
+              )}
+              
+              {/* Takeaway Section */}
+              {message.takeaway && (
+                <div className="bg-gradient-to-r from-purple-900/20 to-indigo-900/20 border border-purple-500/20 rounded-lg p-4">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <h4 className="font-semibold text-purple-300 text-sm">Key Takeaway</h4>
+                  </div>
+                  <div className="text-gray-200 text-sm italic">
+                    {formatTextContent(message.takeaway)}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        }
+        
         // All string content should be rendered directly without extra containers
         return (
           <div className="text-[15px] leading-relaxed">
@@ -84,15 +127,15 @@ const MessageBubble = ({ message }) => {
         }        // Check if this is chart data directly - extract for separate display
         if (content.chart && typeof content.chart === 'object') {
           console.log('Direct chart data found:', content.chart);
-          return (
-            <div className="space-y-3">
-              {content.message && (
-                <div className="text-[15px] leading-relaxed">
-                  {formatTextContent(content.message)}
-                </div>
-              )}
-            </div>
-          );
+          // Create enhanced content data with insight and takeaway for chart display
+          const chartContentData = {
+            title: content.chart.title || "Analysis Result",
+            description: content.message,
+            insight: content.insight || "",
+            takeaway: content.takeaway || "",
+            chart_data: content.chart.data
+          };
+          return formatChartTextContent(chartContentData);
         }// Handle legacy format or malformed objects
         if (content.body || content.title) {
           const textContent = content.body || content.title;
@@ -184,10 +227,15 @@ const MessageBubble = ({ message }) => {
       </div>
     );
   };  const formatChartTextContent = (contentData) => {
-    const { title, insight, description, takeaway, chart_data } = contentData;
+    // Use insight and takeaway from message properties if available, otherwise from contentData
+    const insight = message.insight || contentData.insight || '';
+    const takeaway = message.takeaway || contentData.takeaway || '';
+    const { title, description, chart_data } = contentData;
     
     // Log chart data to help with debugging
     console.log('Chart text content data:', contentData);
+    console.log('Message insight:', message.insight);
+    console.log('Message takeaway:', message.takeaway);
     
     return (
       <div className="space-y-4">

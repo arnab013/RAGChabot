@@ -32,16 +32,16 @@ class PublicationTrendsHandler(BaseQueryHandler):
             
             # Route to appropriate handler based on query type
             if query_params['type'] == 'relative_months':
-                return self._handle_relative_months(query_params)
+                return self._handle_relative_months(query, query_params)
             elif query_params['type'] == 'relative_years':
-                return self._handle_relative_years(query_params)
+                return self._handle_relative_years(query, query_params)
             elif query_params['type'] == 'specific_years':
-                return self._handle_specific_years(query_params)
+                return self._handle_specific_years(query, query_params)
             elif query_params['type'] == 'comparison_years':
-                return self._handle_comparison_years(query_params)
+                return self._handle_comparison_years(query, query_params)
             else:
                 # Default to last 12 months
-                return self._handle_relative_months({'months_back': 12, 'title': 'Publication Trends (Last 12 Months)'})
+                return self._handle_relative_months(query, {'months_back': 12, 'title': 'Publication Trends (Last 12 Months)'})
                 
         except Exception as e:
             return QueryResponse(
@@ -87,7 +87,7 @@ class PublicationTrendsHandler(BaseQueryHandler):
         
         return params
     
-    def _handle_relative_months(self, params: Dict[str, Any]) -> QueryResponse:
+    def _handle_relative_months(self, query: str, params: Dict[str, Any]) -> QueryResponse:
         """Handle relative months queries like 'last 12 months'"""
         months_back = params.get('months_back', 12)
         title = params.get('title', f'Last {months_back} Months')
@@ -154,18 +154,19 @@ class PublicationTrendsHandler(BaseQueryHandler):
         values = [m['count'] for m in complete_months]
         chart = ChartGenerator.generate_line_chart(labels, values, title)
         
-        # Generate simple insight and takeaway
-        insight = "This chart shows the publication trend over the selected period."
-        takeaway = "Use this trend to identify periods of increased or decreased innovation activity."
+        # Generate dynamic insights using LLM
+        data_summary = f"Monthly patent publications from {complete_months[0]['year']}-{complete_months[0]['month']:02d} to {complete_months[-1]['year']}-{complete_months[-1]['month']:02d}. Total: {total:,} patents. Peak: {max(values)} patents, Low: {min(values)} patents."
+        insights = self.generate_dynamic_insights(query, chart, data_summary)
+        
         return QueryResponse(
             message="\n".join(response_lines),
             chart=chart,
             data={'monthly_complete': complete_months},
-            insight=insight,
-            takeaway=takeaway
+            insight=insights["insight"],
+            takeaway=insights["takeaway"]
         )
     
-    def _handle_relative_years(self, params: Dict[str, Any]) -> QueryResponse:
+    def _handle_relative_years(self, query: str, params: Dict[str, Any]) -> QueryResponse:
         """Handle relative years queries like 'last 5 years'"""
         years_back = params.get('years_back', 5)
         title = params.get('title', f'Last {years_back} Years')
@@ -207,18 +208,19 @@ class PublicationTrendsHandler(BaseQueryHandler):
         values = [y['count'] for y in complete_years]
         chart = ChartGenerator.generate_line_chart(labels, values, title)
         
-        # Generate simple insight and takeaway
-        insight = "This chart shows the publication trend over the selected years."
-        takeaway = "Use this trend to identify long-term changes in patent activity."
+        # Generate dynamic insights using LLM
+        data_summary = f"Yearly patent publications from {start_year} to {current_year}. Total: {total:,} patents. Peak: {max(values)} patents in {labels[values.index(max(values))]}, Low: {min(values)} patents in {labels[values.index(min(values))]}."
+        insights = self.generate_dynamic_insights(query, chart, data_summary)
+        
         return QueryResponse(
             message="\n".join(response_lines),
             chart=chart,
             data={'yearly_complete': complete_years},
-            insight=insight,
-            takeaway=takeaway
+            insight=insights["insight"],
+            takeaway=insights["takeaway"]
         )
     
-    def _handle_specific_years(self, params: Dict[str, Any]) -> QueryResponse:
+    def _handle_specific_years(self, query: str, params: Dict[str, Any]) -> QueryResponse:
         """Handle specific year queries like 'trends in 2023'"""
         years = params.get('years', [2023])
         title = params.get('title', f'Publication Trends for {", ".join(map(str, years))}')
@@ -284,7 +286,7 @@ class PublicationTrendsHandler(BaseQueryHandler):
             data={'yearly_monthly': yearly_monthly}
         )
     
-    def _handle_comparison_years(self, params: Dict[str, Any]) -> QueryResponse:
+    def _handle_comparison_years(self, query: str, params: Dict[str, Any]) -> QueryResponse:
         """Handle comparison queries like '2023 vs 2025'"""
         years = params.get('years', [2023, 2025])
         title = params.get('title', f'Publication Trends Comparison: {" vs ".join(map(str, years))}')

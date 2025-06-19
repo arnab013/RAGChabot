@@ -228,6 +228,8 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
         sender: 'ai',
         timestamp: new Date(),
         chartData: chartData, // Include chart data if available
+        insight: response.data.insight || '', // Include insight from API response
+        takeaway: response.data.takeaway || '', // Include takeaway from API response
       };
 
       setMessages(prev => [...prev, aiMessage]);

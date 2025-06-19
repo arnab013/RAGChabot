@@ -15,21 +15,20 @@ class TechnologyAnalysisHandler(BaseQueryHandler):
         """Keywords that identify technology analysis queries"""
         return [
             "technology", "tech", "classification", "class", "cpc",
-            "ipc", "category", "field", "domain", "sector"
-        ]
+            "ipc", "category", "field", "domain", "sector"        ]
     
     def handle_query(self, query: str, **kwargs) -> QueryResponse:
         """Handle technology analysis query"""
         try:
             # Use IPC analysis since it's available in the database
-            return self._handle_ipc_analysis()
+            return self._handle_ipc_analysis(query)
                 
         except Exception as e:
             return QueryResponse(
                 message=f"Sorry, I couldn't retrieve the technology analysis. Error: {str(e)}"
             )
     
-    def _handle_ipc_analysis(self) -> QueryResponse:
+    def _handle_ipc_analysis(self, query: str) -> QueryResponse:
         """Handle IPC classification analysis"""
         # Get IPC data from patents
         patents = self.session.query(Patent.ipc).filter(
@@ -68,16 +67,18 @@ class TechnologyAnalysisHandler(BaseQueryHandler):
             chart = ChartGenerator.generate_bar_chart(labels, values, "IPC Classification Distribution")
         else:
             chart = None
+          # Generate dynamic insights using LLM
+        total_patents = sum(item['count'] for item in ipc_distribution)
+        top_ipc = ipc_distribution[0] if ipc_distribution else {'category': 'None', 'count': 0}
+        data_summary = f"Technology distribution across {len(ipc_distribution)} IPC sections. Total patents: {total_patents}. Top technology: {top_ipc['category']} with {top_ipc['count']} patents ({(top_ipc['count']/total_patents*100):.1f}% of total)."
+        insights = self.generate_dynamic_insights(query, chart, data_summary)
         
-        # Generate simple insight and takeaway
-        insight = "This chart shows the distribution of patents by technology category (IPC section)."
-        takeaway = "See which technology sectors are most active in recent patent filings."
         return QueryResponse(
             message="\n".join(response_lines),
             chart=chart,
             data={'ipc_distribution': ipc_distribution},
-            insight=insight,
-            takeaway=takeaway
+            insight=insights["insight"],
+            takeaway=insights["takeaway"]
         )
     
     def _format_ipc_response(self, ipc_distribution: List[Dict]) -> List[str]:
