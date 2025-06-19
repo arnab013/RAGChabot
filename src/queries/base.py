@@ -54,8 +54,8 @@ class BaseQueryHandler(ABC):
                         if i < len(values):
                             data_points.append(f"{label}: {values[i]}")
             
-            # Construct LLM prompt
-            prompt = f"""Based on the following patent data analysis, generate concise and insightful insights and takeaways:
+            # Construct LLM prompt with formatting instructions
+            prompt = f"""Based on the following patent data analysis, generate concise and insightful insights and takeaways.
 
 Query: {query}
 Chart Type: {chart_type}
@@ -63,19 +63,25 @@ Chart Title: {chart_title}
 Data Summary: {data_summary}
 Key Data Points: {', '.join(data_points[:8])}
 
+FORMATTING REQUIREMENTS:
+- Use **bold text** for key terms and numbers
+- Include bullet points where appropriate
+- Make insights specific and actionable
+- Use clear, well-structured language
+
 Please provide:
-1. A brief insight (1-2 sentences) highlighting the most important trend or pattern in the data
-2. A practical takeaway (1-2 sentences) explaining what this means for innovation strategy or business decisions
+1. A brief insight (2-3 sentences) highlighting the most important trend or pattern in the data
+2. A practical takeaway (2-3 sentences) explaining what this means for innovation strategy or business decisions
 
 Format your response as JSON:
 {{
-    "insight": "Your insight here",
-    "takeaway": "Your takeaway here"
+    "insight": "Your well-formatted insight with **bold text** for emphasis and • bullet points if needed",
+    "takeaway": "Your well-formatted takeaway with **bold text** and clear structure"
 }}"""
 
             messages = [{"role": "user", "content": prompt}]
               # Call LLM
-            response = chat(messages, temperature=0.3, max_tokens=200)
+            response = chat(messages, temperature=0.3, max_tokens=300)
             
             # Parse LLM response
             import json
@@ -83,8 +89,8 @@ Format your response as JSON:
             try:
                 parsed_response = json.loads(response)
                 return {
-                    "insight": parsed_response.get("insight", "The analysis reveals significant patterns in patent activity that warrant further examination."),
-                    "takeaway": parsed_response.get("takeaway", "Organizations can leverage these insights to optimize their innovation strategies and competitive positioning.")
+                    "insight": parsed_response.get("insight", "The analysis reveals **significant patterns** in patent activity that warrant further examination."),
+                    "takeaway": parsed_response.get("takeaway", "Organizations can leverage these insights to optimize their **innovation strategies** and competitive positioning.")
                 }
             except json.JSONDecodeError:
                 # Fallback if JSON parsing fails
@@ -98,16 +104,16 @@ Format your response as JSON:
                     elif '"takeaway"' in line.lower():
                         takeaway = line.split(':', 1)[-1].strip().strip('",')                
                 return {
-                    "insight": insight or "The data reveals meaningful trends that demonstrate innovation patterns across the patent landscape.",
-                    "takeaway": takeaway or "These analytical findings provide actionable intelligence for strategic research and development planning."
+                    "insight": insight or "The data reveals **meaningful trends** that demonstrate innovation patterns across the patent landscape.",
+                    "takeaway": takeaway or "These analytical findings provide **actionable intelligence** for strategic research and development planning."
                 }
                 
         except Exception as e:
             logger.warning(f"Failed to generate dynamic insights: {e}")
-            # Return fallback insights
+            # Return fallback insights with formatting
             return {
-                "insight": "The patent analysis reveals significant trends that demonstrate important innovation patterns across the technology landscape.",
-                "takeaway": "These insights provide valuable intelligence for strategic research planning and competitive positioning in key innovation areas."
+                "insight": "The patent analysis reveals **significant trends** that demonstrate important innovation patterns across the technology landscape.",
+                "takeaway": "These insights provide **valuable intelligence** for strategic research planning and competitive positioning in key innovation areas."
             }
 
     def generate_error_message(self, query: str, error_type: str, technical_error: str) -> str:

@@ -23,21 +23,25 @@ class QueryClassifier:
     
     def _create_classification_prompt(self) -> str:
         """Create the system prompt for query classification."""
-        return """You are an intelligent query classifier for a patent search and analytics system. 
+        return """You are an intelligent query classifier for a patent search and analytics system.
 
 Your task is to analyze user queries and determine what type(s) of operations are needed. The system supports four main query types:
 
 1. **CONVERSATION**: General chat, greetings, questions about the system, help requests, or non-patent/non-statistical queries
-2. **PATENT_SEARCH**: Requests to find specific patents, inventions, or patent information based on technology, content, or criteria
-3. **PATENT_DETAIL**: Requests for detailed information about a specific patent using patent numbers (e.g., "show details of EP0001556B1", "tell me about patent US1234567")
+2. **PATENT_SEARCH**: Requests to find specific patents, inventions, or patent information based on technology, content, criteria, OR when users provide just a patent number for semantic search
+3. **PATENT_DETAIL**: Requests for detailed database information about a specific patent using patent numbers WITH explicit detail keywords (e.g., "show details of EP0001556B1", "tell me about patent US1234567")
 4. **STATISTICS**: Requests for data analysis, charts, trends, counts, distributions, or statistical insights about the patent database
+
+CRITICAL DISTINCTION FOR PATENT QUERIES:
+- If user provides JUST a patent number (e.g., "EP0002650B1", "US1234567"): → PATENT_SEARCH (semantic search)
+- If user asks for details/information about a patent number (e.g., "details about EP0002650B1", "tell me about US1234567"): → PATENT_DETAIL (database lookup)
 
 IMPORTANT CLASSIFICATION RULES:
 - A single user query can require MULTIPLE query types (e.g., "Find solar energy patents and show me the publication trends")
 - Always classify based on the USER'S INTENT, not just keywords
 - Consider conversation context when provided
 - Be precise - don't over-classify simple requests
-- PATENT_DETAIL is for specific patent number lookups, PATENT_SEARCH is for finding patents by criteria
+- PATENT_DETAIL requires EXPLICIT detail-requesting keywords, not just a patent number alone
 
 For each query, return a JSON response with:
 {
@@ -45,8 +49,8 @@ For each query, return a JSON response with:
     "reasoning": "Brief explanation of classification",
     "confidence": 0.95,
     "specific_requests": {
-        "patent_search": "extracted search terms or null",
-        "patent_detail": "extracted patent number or null",
+        "patent_search": "extracted search terms or patent number for semantic search",
+        "patent_detail": "extracted patent number for detailed lookup or null",
         "statistics": "specific statistics requested or null",
         "conversation": "conversational intent or null"
     }
@@ -70,10 +74,18 @@ Response: {
     "specific_requests": {"patent_search": "solar energy", "patent_detail": null, "statistics": null, "conversation": null}
 }
 
+User: "EP0002650B1"
+Response: {
+    "query_types": ["PATENT_SEARCH"],
+    "reasoning": "Single patent number provided for semantic search, no detail keywords present",
+    "confidence": 0.95,
+    "specific_requests": {"patent_search": "EP0002650B1", "patent_detail": null, "statistics": null, "conversation": null}
+}
+
 User: "Show me details of patent EP0001556B1"
 Response: {
     "query_types": ["PATENT_DETAIL"],
-    "reasoning": "Request for detailed information about a specific patent number",
+    "reasoning": "Request for detailed information about a specific patent number with explicit detail keywords",
     "confidence": 0.99,
     "specific_requests": {"patent_search": null, "patent_detail": "EP0001556B1", "statistics": null, "conversation": null}
 }
@@ -81,7 +93,7 @@ Response: {
 User: "Tell me about patent US1234567"
 Response: {
     "query_types": ["PATENT_DETAIL"],
-    "reasoning": "Request for information about a specific patent number",
+    "reasoning": "Request for information about a specific patent number with explicit detail keywords",
     "confidence": 0.98,
     "specific_requests": {"patent_search": null, "patent_detail": "US1234567", "statistics": null, "conversation": null}
 }
@@ -136,20 +148,55 @@ Now classify the following query:"""
             if match:
                 return match.group(1).upper()
         return None
-
+    
     def is_patent_detail_query(self, query: str) -> bool:
         """Check if query is asking for details about a specific patent."""
-        query_lower = query.lower()
+        query_lower = query.lower().strip()
+        
         detail_indicators = [
-            "details of", "detail of", "information about", "tell me about",
-            "show me", "what is", "describe", "explain", "about patent"
+            "details of", "detail of", "details about", "detail about", 
+            "information about", "tell me about", "show me details",
+            "show me information", "what is", "describe", "explain", 
+            "about patent", "patent details", "patent information",
+            "more about", "full details", "complete information",
+            "more details", "more detail", "detailed information",
+            "get detailed", "show detailed", "comprehensive information",
+            "claims for", "patent claims", "detailed claims",
+            "description of", "detailed description", "technical details"
         ]
         
         # Check if query contains both a detail indicator and a patent number
         has_detail_indicator = any(indicator in query_lower for indicator in detail_indicators)
         has_patent_number = self.extract_patent_number(query) is not None
         
-        return has_detail_indicator and has_patent_number
+        # Special handling for "more details" type requests that might refer to previous context
+        has_more_details_request = any(phrase in query_lower for phrase in [
+            "more details", "more information", "detailed claims", 
+            "get detailed", "show detailed", "comprehensive information"
+        ])
+        
+        # If it's a "more details" request without explicit patent number, 
+        # it might be referring to a previous patent discussion
+        if has_more_details_request and not has_patent_number:
+            # This might be a follow-up detail request
+            return True
+        
+        # Special case: if the query is ONLY a patent number (or mostly just a patent number),
+        # it should be treated as a search query, not a detail query
+        if has_patent_number:
+            # Remove the patent number from the query and see what's left
+            patent_number = self.extract_patent_number(query)
+            query_without_patent = query_lower.replace(patent_number.lower(), "").strip()
+            
+            # If after removing the patent number, there's very little left (just spaces, punctuation),
+            # then this is just a patent number search, not a detail request
+            remaining_words = [word for word in query_without_patent.split() if len(word) > 2]
+            
+            # If there are fewer than 2 meaningful words left, treat as search
+            if len(remaining_words) < 2:
+                return False
+        
+        return has_detail_indicator and (has_patent_number or has_more_details_request)
 
     def classify_query(self, user_query: str, conversation_context: Optional[List[Dict]] = None) -> Dict:
         """
@@ -265,9 +312,9 @@ Now classify the following query:"""
             "top companies", "top inventors", "sdg distribution", "technology fields",
             "plot", "display", "comparison", "compare", "analyze", "overview",
             "what countries", "which countries", "main technology", "technology breakdown",
-            "patent trends", "publication trends", "sdg", "goal", "field", "applicant"
-        ]
-          # Conversational keywords
+            "patent trends", "publication trends", "sdg", "goal", "field", "applicant"        ]
+        
+        # Conversational keywords
         conversation_keywords = [
             "hello", "hi", "help", "how are you", "what can you do", "thanks",
             "goodbye", "explain", "tell me about"
@@ -281,7 +328,13 @@ Now classify the following query:"""
             query_types.append("PATENT_DETAIL")
             specific_requests["patent_detail"] = self.extract_patent_number(user_query)
         
-        # Check for patent search
+        # Check for standalone patent number (semantic search)
+        elif self.extract_patent_number(user_query) and not self.is_patent_detail_query(user_query):
+            # If we found a patent number but it's not a detail query, treat as search
+            query_types.append("PATENT_SEARCH")
+            specific_requests["patent_search"] = user_query
+        
+        # Check for patent search with keywords
         elif any(keyword in query_lower for keyword in patent_keywords):
             query_types.append("PATENT_SEARCH")
             specific_requests["patent_search"] = user_query

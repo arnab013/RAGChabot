@@ -28,10 +28,10 @@ def chat_gemini(messages, model=GOOGLE_MODEL, **gen_params):
             "parts": [{"text": msg["content"]}]
         })
     
-    # Set up generation config
+    # Set up generation config with increased token limit for comprehensive responses
     generation_config = {
         "temperature": gen_params.get("temperature", 0.7),
-        "maxOutputTokens": gen_params.get("max_tokens", 8192),
+        "maxOutputTokens": gen_params.get("max_tokens", 12384),  # Increased from 8192 to 16384
         "topP": gen_params.get("top_p", 0.95)
     }
     
