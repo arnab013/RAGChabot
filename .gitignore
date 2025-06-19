@@ -8,6 +8,22 @@ embeddings/
 *.pkl          
 *.log          
 
+# Data files
+*.csv
+*.db
+*.gguf
+*.h5
+*.bin
+/data/patents.db
+# Including cleaned_patent_data.xlsx for upload
+data/~$*.xlsx
+
+# Model files
+*.pt
+*.pth
+model.safetensors
+optimizer.pt
+
 # Test and debug files
 test_*.py
 debug_*.py
@@ -31,6 +47,13 @@ start_production.py
 *COMPLETE.md
 *SUMMARY.md
 README_new.md
+
+# Frontend build and dependencies
+frontend/node_modules/
+frontend/build/
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*
 
 # Frontend test files
 frontend/src/Test*.js
