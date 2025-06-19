@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Horizontal Chart Test</title>
+</head>
+<body>
+    <h1>Testing Horizontal Bar Chart</h1>
+    <p>Open the frontend at <a href="http://localhost:51955">http://localhost:51955</a> and test the query: "Show geographical distribution of patents"</p>
+    
+    <h2>Expected Result:</h2>
+    <ul>
+        <li>Chart Type: horizontalBar</li>
+        <li>Orientation: Horizontal bars</li>
+        <li>Countries on Y-axis</li>
+        <li>Patent counts on X-axis</li>
+    </ul>
+
+    <h2>API Response Test:</h2>
+    <pre id="api-test">Loading...</pre>
+
+    <script>
+        fetch('http://localhost:5000/api/search', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({query: 'Show geographical distribution of patents'})
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('api-test').textContent = JSON.stringify(data.chart, null, 2);
+        })
+        .catch(error => {
+            document.getElementById('api-test').textContent = 'Error: ' + error;
+        });
+    </script>
+</body>
+</html>

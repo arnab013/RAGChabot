@@ -348,14 +348,14 @@ const MessageBubble = ({ message }) => {
           )}
         </div>        {/* Message Content */}
         <div className={`
-          group w-full
-          ${isUser ? 'items-end max-w-2xl ml-auto' : 'items-start max-w-5xl'}
+          group
+          ${isUser ? 'flex flex-col items-end w-full' : 'flex flex-col items-start w-full'}
         `}>
           <div className={`
-            px-6 py-5 rounded-2xl shadow-lg relative backdrop-blur-sm w-full
+            px-6 py-5 rounded-2xl shadow-lg relative backdrop-blur-sm
             ${isUser 
-              ? 'bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-gray-900 rounded-tr-md shadow-yellow-400/30 border border-yellow-300/50' 
-              : 'bg-gradient-to-r from-cyan-400/20 via-blue-500/20 to-cyan-400/20 text-white rounded-tl-md shadow-cyan-400/30 border border-cyan-400/30 backdrop-blur-md'
+              ? 'bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-gray-900 rounded-tr-md shadow-yellow-400/30 border border-yellow-300/50 max-w-[85%] min-w-[150px] inline-block' 
+              : 'bg-gradient-to-r from-cyan-400/20 via-blue-500/20 to-cyan-400/20 text-white rounded-tl-md shadow-cyan-400/30 border border-cyan-400/30 backdrop-blur-md w-full max-w-5xl'
             }
             transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.01]
             ${isUser ? 'hover:shadow-yellow-400/40' : 'hover:shadow-cyan-400/40'}
@@ -369,7 +369,7 @@ const MessageBubble = ({ message }) => {
           {/* Timestamp */}
           <div className={`
             text-xs text-gray-400 mt-2 px-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200
-            ${isUser ? 'text-right' : 'text-left'}
+            ${isUser ? 'text-right self-end' : 'text-left self-start'}
           `}>
             {formatTime(message.timestamp)}
           </div>

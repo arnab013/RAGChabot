@@ -370,13 +370,15 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
           ))}
         </div>
       </div>      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-        {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
-        ))}
-        
-        {isThinking && <TypingIndicator />}
-        <div ref={messagesEndRef} />
+      <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="max-w-3xl mx-auto space-y-6">
+          {messages.map((message) => (
+            <MessageBubble key={message.id} message={message} />
+          ))}
+          
+          {isThinking && <TypingIndicator />}
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
       {/* Input Area */}
@@ -392,10 +394,10 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
               className="w-full resize-none bg-gray-700 border border-gray-600 rounded-2xl px-4 py-3 pr-12
                        focus:ring-2 focus:ring-cyan-400 focus:border-transparent focus:bg-gray-600
                        transition-all duration-200 placeholder-gray-400 text-white
-                       min-h-[48px] max-h-[120px] leading-relaxed overflow-hidden"
+                       min-h-[49px] max-h-[120px] leading-relaxed overflow-hidden"
               rows={1}
               disabled={isThinking}
-              style={{ height: '48px', resize: 'none' }}
+              style={{ height: '49px', resize: 'none' }}
             />
             <button
               onClick={sendMessage}

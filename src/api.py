@@ -314,8 +314,9 @@ def _format_patent_details(patent, requested_number: str) -> str:
     # Abstract
     if patent.abstract_text:
         abstract = patent.abstract_text.strip()
-        if len(abstract) > 500:
-            abstract = abstract[:500] + "..."
+        # Show more of the abstract - up to 1500 characters instead of 500
+        if len(abstract) > 1500:
+            abstract = abstract[:1500] + "..."
         response += f"**Abstract:**\n{abstract}\n\n"
     
     # Inventors and Applicants
@@ -352,10 +353,8 @@ def _format_patent_details(patent, requested_number: str) -> str:
         if patent.ipc:
             ipc_data = json.loads(patent.ipc) if isinstance(patent.ipc, str) else patent.ipc
             if ipc_data and isinstance(ipc_data, list):
-                response += f"**IPC Classification:** {', '.join(ipc_data[:5])}"
-                if len(ipc_data) > 5:
-                    response += f" (and {len(ipc_data) - 5} more)"
-                response += "\n\n"
+                # Show all IPC codes instead of limiting to 5
+                response += f"**IPC Classification:** {', '.join(ipc_data)}\n\n"
     except:
         pass
     
@@ -386,19 +385,34 @@ def _format_patent_details(patent, requested_number: str) -> str:
     if patent.analysis_explanation:
         try:
             analysis = json.loads(patent.analysis_explanation) if isinstance(patent.analysis_explanation, str) else patent.analysis_explanation
+            
+            # Handle different data structures for analysis
+            analysis_text = ""
             if isinstance(analysis, str):
                 analysis_text = analysis.strip()
+            elif isinstance(analysis, list):
+                # If it's a list, join the items properly
+                formatted_items = []
+                for item in analysis:
+                    if isinstance(item, str):
+                        # Clean up the item and format it properly
+                        clean_item = item.strip()
+                        if clean_item:
+                            formatted_items.append(clean_item)
+                if formatted_items:
+                    analysis_text = "\n".join(f"• {item}" for item in formatted_items)
             elif isinstance(analysis, dict) and 'text' in analysis:
                 analysis_text = analysis['text'].strip()
             else:
                 analysis_text = str(analysis).strip()
             
             if analysis_text and len(analysis_text) > 50:
-                if len(analysis_text) > 300:
-                    analysis_text = analysis_text[:300] + "..."
+                # Don't truncate technical analysis - show it all
                 response += f"**Technical Analysis:**\n{analysis_text}\n\n"
-        except:
-            pass
+        except Exception as e:
+            # If there's an error, show what we can
+            if patent.analysis_explanation:
+                response += f"**Technical Analysis:**\n{str(patent.analysis_explanation)}\n\n"
     
     response += "---\n\n"
     response += "💡 **Need more information?** You can ask me to:\n"
