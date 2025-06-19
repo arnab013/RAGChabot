@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Loader2, Menu, X, Search, BarChart3, MessageSquare, FileText, Download } from 'lucide-react';
+import { Send, Loader2, Menu, X, Search, BarChart3, MessageSquare, FileText } from 'lucide-react';
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
 import axios from 'axios';
@@ -291,338 +291,73 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
       default: return <MessageSquare {...iconProps} />;
     }
   };
-    const downloadConversation = async () => {
-    try {
-      // Show loading indicator
-      console.log('Starting PDF generation...');
-      
-      // Check if messages exist
-      if (messages.length <= 1) {
-        alert('No conversation to download.');
-        return;
-      }
-      
-      console.log('Preparing print view...');
-      
-      // Create a new window for printing
-      const printWindow = window.open('', '_blank');
-      
-      if (!printWindow) {
-        alert('Please allow popups for this site to enable PDF download.');
-        return;
-      }
-      
-      // Build the HTML content for printing
-      let printHTML = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <title>GoalDigger Conversation - ${new Date().toLocaleDateString()}</title>
-          <style>
-            @page {
-              margin: 20mm;
-              size: A4;
-            }
-            
-            body {
-              font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-              line-height: 1.6;
-              color: #333;
-              margin: 0;
-              padding: 0;
-              background: white;
-            }
-            
-            .header {
-              text-align: center;
-              margin-bottom: 30px;
-              padding-bottom: 20px;
-              border-bottom: 2px solid #e5e7eb;
-            }
-            
-            .header h1 {
-              font-size: 24px;
-              font-weight: bold;
-              margin: 0;
-              color: #0891b2;
-            }
-            
-            .header p {
-              font-size: 14px;
-              color: #6b7280;
-              margin: 10px 0 0 0;
-            }
-            
-            .message {
-              margin-bottom: 25px;
-              page-break-inside: avoid;
-            }
-            
-            .message-container {
-              display: flex;
-              align-items: flex-start;
-              gap: 15px;
-            }
-            
-            .message-container.user {
-              flex-direction: row-reverse;
-            }
-            
-            .avatar {
-              width: 32px;
-              height: 32px;
-              border-radius: 50%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-weight: bold;
-              font-size: 14px;
-              flex-shrink: 0;
-            }
-            
-            .avatar.user {
-              background: linear-gradient(135deg, #fbbf24, #f59e0b);
-              color: #1f2937;
-            }
-            
-            .avatar.ai {
-              background: linear-gradient(135deg, #0891b2, #0284c7);
-              color: white;
-            }
-            
-            .content-wrapper {
-              flex: 1;
-              max-width: calc(100% - 50px);
-            }
-            
-            .message-bubble {
-              padding: 15px 20px;
-              border-radius: 16px;
-              word-wrap: break-word;
-              line-height: 1.6;
-              font-size: 14px;
-              margin-bottom: 8px;
-            }
-            
-            .message-bubble.user {
-              background: #fef3c7;
-              border: 1px solid #fcd34d;
-              color: #1f2937;
-              max-width: 70%;
-              margin-left: auto;
-            }
-            
-            .message-bubble.ai {
-              background: #f0f9ff;
-              border: 1px solid #0891b2;
-              color: #1f2937;
-            }
-            
-            .timestamp {
-              font-size: 11px;
-              color: #6b7280;
-              text-align: right;
-            }
-            
-            .timestamp.ai {
-              text-align: left;
-            }
-            
-            .chart-container {
-              margin-top: 16px;
-              padding: 16px;
-              background: #f8fafc;
-              border-radius: 12px;
-              border: 1px solid #e2e8f0;
-              text-align: center;
-            }
-            
-            .chart-title {
-              font-weight: bold;
-              color: #0891b2;
-              margin-bottom: 8px;
-            }
-            
-            .chart-info {
-              font-size: 12px;
-              color: #6b7280;
-            }
-            
-            @media print {
-              body {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-              }
-              
-              .message {
-                page-break-inside: avoid;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>GoalDigger Conversation</h1>
-            <p>Patent & SDG Analytics - ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
-          </div>
-      `;
-      
-      // Process each message
-      messages.forEach((message, index) => {
-        if (index === 0 && message.content.includes('Hello there')) return; // Skip welcome message
-        
-        const isUser = message.sender === 'user';
-        
-        // Process message content
-        let content = '';
-        if (typeof message.content === 'string') {
-          content = message.content;
-        } else if (message.content && typeof message.content === 'object') {
-          if (message.content.text) {
-            content = message.content.text;
-          } else if (message.content.content && message.content.content.text) {
-            content = message.content.content.text;
-          } else {
-            content = JSON.stringify(message.content, null, 2);
-          }
-        }
-        
-        // Format content with line breaks and escape HTML
-        content = content.replace(/&/g, '&amp;')
-                        .replace(/</g, '&lt;')
-                        .replace(/>/g, '&gt;')
-                        .replace(/\n/g, '<br>');
-        
-        printHTML += `
-          <div class="message">
-            <div class="message-container ${isUser ? 'user' : ''}">
-              <div class="avatar ${isUser ? 'user' : 'ai'}">
-                ${isUser ? 'U' : 'AI'}
-              </div>
-              <div class="content-wrapper">
-                <div class="message-bubble ${isUser ? 'user' : 'ai'}">
-                  ${content}
-                </div>
-                <div class="timestamp ${isUser ? 'user' : 'ai'}">
-                  ${message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </div>
-              </div>
-            </div>
-        `;
-        
-        // Add chart if present
-        if (!isUser && message.chartData) {
-          printHTML += `
-            <div class="chart-container">
-              <div class="chart-title">📊 ${message.chartData.title || 'Chart'}</div>
-              <div class="chart-info">Chart data visualization (${message.chartData.type || 'chart'})</div>
-            </div>
-          `;
-        }
-        
-        printHTML += '</div>';
-      });
-      
-      printHTML += `
-        </body>
-        </html>
-      `;
-      
-      // Write content to the new window
-      printWindow.document.write(printHTML);
-      printWindow.document.close();
-      
-      // Wait for content to load, then trigger print
-      printWindow.onload = () => {
-        setTimeout(() => {
-          printWindow.print();
-          
-          // Close the window after printing (user can cancel this)
-          printWindow.onafterprint = () => {
-            printWindow.close();
-          };
-        }, 500);
-      };
-      
-      console.log('Print dialog opened');
-      
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      console.error('Error details:', error.message);
-      console.error('Error stack:', error.stack);
-      
-      const useTextFallback = window.confirm(
-        `PDF generation failed: ${error.message}\n\nWould you like to download the conversation as a text file instead?`
-      );
-      
-      if (useTextFallback) {
-        downloadAsText();
-      }
-    }
-  };
-
-  // Simple text export as fallback
-  const downloadAsText = () => {
-        try {
-          let textContent = `GoalDigger Conversation Export\n`;
-          textContent += `Date: ${new Date().toLocaleDateString()}\n`;
-          textContent += `${'-'.repeat(50)}\n\n`;
-          
-          messages.forEach((message, index) => {
-            if (index === 0 && message.content.includes('Hello there')) return; // Skip welcome message
-            
-            const sender = message.sender === 'user' ? 'USER' : 'AI';
-            const time = message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            
-            textContent += `[${time}] ${sender}:\n`;
-            
-            let content = '';
-            if (typeof message.content === 'string') {
-              content = message.content;
-            } else if (message.content && typeof message.content === 'object') {
-              if (message.content.text) {
-                content = message.content.text;
-              } else if (message.content.content && message.content.content.text) {
-                content = message.content.content.text;
-              } else {
-                content = JSON.stringify(message.content, null, 2);
-              }
-            }
-            
-            textContent += `${content}\n`;
-            
-            if (message.chartData) {
-              textContent += `📊 Chart: ${message.chartData.title || 'Data Visualization'}\n`;
-            }
-            
-            textContent += `\n${'-'.repeat(30)}\n\n`;
-          });
-          
-          const blob = new Blob([textContent], { type: 'text/plain' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `GoalDigger_Conversation_${new Date().toISOString().split('T')[0]}.txt`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          
-          console.log('Text export completed');
-        } catch (error) {
-          console.error('Text export failed:', error);
-          alert('Export failed. Please try again.');        }
-      };
-
   return (
     <div className="flex justify-center items-start min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
       {/* Main Chat Container */}
       <div className="flex h-screen max-w-6xl w-full bg-gray-800/30 backdrop-blur-lg rounded-3xl border border-gray-700/50 shadow-2xl overflow-hidden relative">
         
-        {/* Sidebar with Example Prompts */}
-        <div className={`w-80 bg-gray-800/50 backdrop-blur-sm border-r border-gray-700/50 transform transition-transform duration-300 ease-in-out ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full absolute'
+        {/* Main Chat Area */}
+        <div className="flex-1 flex flex-col relative">{/* Messages Area */}
+      <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="max-w-[600px] mx-auto space-y-6">
+          {messages.map((message) => (
+            <MessageBubble key={message.id} message={message} />
+          ))}
+          
+          {isThinking && <TypingIndicator />}
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      {/* Input Area */}
+      <div className="flex-shrink-0 bg-gray-800/90 backdrop-blur-sm border-t border-gray-700/50 px-6 py-4">
+        <div className="flex items-end space-x-4 max-w-[600px] mx-auto">
+          <div className="flex-1 relative chat-input-container">
+            <textarea
+              ref={inputRef}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Type your message..."
+              className="w-full resize-none bg-gray-700 border border-gray-600 rounded-2xl px-4 py-3 pr-12
+                       focus:ring-2 focus:ring-cyan-400 focus:border-transparent focus:bg-gray-600
+                       transition-all duration-200 placeholder-gray-400 text-white
+                       min-h-[49px] max-h-[120px] leading-relaxed overflow-hidden"
+              rows={1}
+              disabled={isThinking}
+              style={{ height: '49px', resize: 'none' }}
+              onInput={(e) => {
+                e.target.style.height = '49px';
+                e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+              }}
+            />
+            <button
+              onClick={sendMessage}
+              disabled={!inputValue.trim() || isThinking}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2
+                       bg-gradient-to-r from-cyan-400 to-blue-500 text-white rounded-xl
+                       hover:from-cyan-500 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed
+                       transition-all duration-200 shadow-lg hover:shadow-cyan-400/25
+                       flex items-center justify-center"
+            >
+              {isThinking ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <Send size={18} />
+              )}
+            </button>
+          </div>
+        </div>
+        
+        <div className="text-center text-gray-400 text-xs mt-2 max-w-[600px] mx-auto">
+          Press Enter to send • Shift + Enter for new line
+        </div>
+      </div>
+        </div>
+        
+        {/* Sidebar with Example Prompts - Right Side */}
+        <div className={`w-80 bg-gray-800/50 backdrop-blur-sm border-l border-gray-700/50 transform transition-transform duration-300 ease-in-out ${
+          isSidebarOpen ? 'translate-x-0' : 'translate-x-full absolute right-0'
         }`}>
           <div className="flex items-center justify-between p-4 border-b border-gray-700">
             <h2 className="text-lg font-semibold text-white">Example Prompts</h2>
@@ -674,7 +409,8 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
                   {isThinking ? 'Thinking...' : `Online${sessionInfo ? ` • ${sessionInfo.message_count} messages` : ''}`}
                 </p>
               </div>
-            </div>            {/* Session controls */}          <div className="flex items-center space-x-2">
+            </div>
+            {/* Session controls */}          <div className="flex items-center space-x-2">
             <button
               onClick={toggleSidebar}
               className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
@@ -682,15 +418,6 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
             >
               <Menu size={20} />
             </button>
-            {messages.length > 1 && (
-              <button
-                onClick={downloadConversation}
-                className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
-                title="Download conversation as PDF"
-              >
-                <Download size={20} />
-              </button>
-            )}
             {sessionInfo && sessionInfo.message_count > 0 && (
               <button
                 onClick={clearSession}
@@ -700,8 +427,9 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-              </button>            )}
-          </div></div>
+              </button>
+            )}
+          </div>          </div>
         </div>
 
           {/* Messages Area */}

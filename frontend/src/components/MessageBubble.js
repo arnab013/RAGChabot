@@ -167,112 +167,38 @@ const MessageBubble = ({ message }) => {
         return <br key={i} />;
       }
       
+      // Handle bold text with ** or __
       let formattedLine = line;
       
-      // Handle headers
-      if (line.startsWith('# ')) {
-        return (
-          <h1 key={i} className="text-xl font-bold text-cyan-300 mt-4 mb-3 border-b border-cyan-400/30 pb-2">
-            {line.substring(2)}
-          </h1>
-        );
-      } else if (line.startsWith('## ')) {
-        return (
-          <h2 key={i} className="text-lg font-semibold text-blue-300 mt-4 mb-2">
-            {line.substring(3)}
-          </h2>
-        );
-      } else if (line.startsWith('### ')) {
-        return (
-          <h3 key={i} className="text-base font-medium text-gray-300 mt-3 mb-2">
-            {line.substring(4)}
-          </h3>
+      // Simple bold formatting
+      if (line.includes('**')) {
+        const parts = line.split('**');
+        formattedLine = parts.map((part, index) => 
+          index % 2 === 1 ? <strong key={index}>{part}</strong> : part
         );
       }
       
-      // Handle bullet points
-      if (line.trim().startsWith('• ')) {
+      // Handle patent numbers (make them stand out)
+      if (typeof formattedLine === 'string' && /[A-Z]{2}[0-9]{7}/.test(formattedLine)) {
+        formattedLine = formattedLine.replace(
+          /([A-Z]{2}[0-9]{7})/g, 
+          '<span class="font-medium text-blue-600 bg-blue-50 px-1 py-0.5 rounded">$1</span>'
+        );
         return (
-          <div key={i} className="flex items-start space-x-2 ml-4 mt-1">
-            <span className="text-cyan-400 mt-1 text-sm">•</span>
-            <span className="text-gray-200">{formatInlineText(line.trim().substring(2))}</span>
-          </div>
+          <div 
+            key={i} 
+            className={i > 0 ? 'mt-2' : ''} 
+            dangerouslySetInnerHTML={{ __html: formattedLine }}
+          />
         );
       }
-      
-      // Handle numbered lists
-      const numberedMatch = line.match(/^(\d+)\.\s(.+)$/);
-      if (numberedMatch) {
-        return (
-          <div key={i} className="flex items-start space-x-2 ml-4 mt-1">
-            <span className="text-cyan-400 font-medium">{numberedMatch[1]}.</span>
-            <span className="text-gray-200">{formatInlineText(numberedMatch[2])}</span>
-          </div>
-        );
-      }
-      
-      // Handle horizontal rules
-      if (line.trim() === '---') {
-        return <hr key={i} className="border-gray-600 my-4" />;
-      }
-      
-      // Handle regular text with inline formatting
-      formattedLine = formatInlineText(line);
       
       return (
-        <div key={i} className={`${i > 0 ? 'mt-2' : ''} text-gray-200 leading-relaxed`}>
+        <div key={i} className={i > 0 ? 'mt-2' : ''}>
           {formattedLine}
         </div>
       );
     });
-  };
-
-  const formatInlineText = (text) => {
-    if (!text) return text;
-    
-    // Handle both bold text and patent numbers
-    const parts = [];
-    let currentIndex = 0;
-    
-    // Combined regex to find both bold patterns and patent numbers
-    const combinedRegex = /(\*\*(.*?)\*\*)|([A-Z]{2}[0-9]{7}[A-Z]?\d?)/g;
-    let match;
-    
-    while ((match = combinedRegex.exec(text)) !== null) {
-      // Add text before the match
-      if (match.index > currentIndex) {
-        parts.push(text.substring(currentIndex, match.index));
-      }
-      
-      if (match[1]) {
-        // This is a bold match
-        parts.push(
-          <strong key={`bold-${match.index}`} className="font-semibold text-white">
-            {match[2]}
-          </strong>
-        );
-      } else if (match[3]) {
-        // This is a patent number match
-        parts.push(
-          <span 
-            key={`patent-${match.index}`} 
-            className="font-medium text-cyan-400 bg-cyan-900/30 px-1 py-0.5 rounded text-sm"
-          >
-            {match[3]}
-          </span>
-        );
-      }
-      
-      currentIndex = match.index + match[0].length;
-    }
-    
-    // Add remaining text
-    if (currentIndex < text.length) {
-      parts.push(text.substring(currentIndex));
-    }
-    
-    // If no matches were found, return original text
-    return parts.length === 0 ? text : (parts.length === 1 ? parts[0] : parts);
   };  const formatSemanticTextContent = (contentData) => {
     const { title, body } = contentData;
     
@@ -428,8 +354,8 @@ const MessageBubble = ({ message }) => {
           <div className={`
             px-6 py-5 rounded-2xl shadow-lg relative backdrop-blur-sm
             ${isUser 
-              ? 'bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-gray-900 rounded-tr-md shadow-yellow-400/30 border border-yellow-300/50 max-w-[85%] min-w-[150px] inline-block' 
-              : 'bg-gradient-to-r from-cyan-400/20 via-blue-500/20 to-cyan-400/20 text-white rounded-tl-md shadow-cyan-400/30 border border-cyan-400/30 backdrop-blur-md w-full max-w-5xl'
+              ? 'bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-gray-900 rounded-tr-md shadow-yellow-400/30 border border-yellow-300/50 max-w-[75%] min-w-[150px] inline-block' 
+              : 'bg-gradient-to-r from-cyan-400/20 via-blue-500/20 to-cyan-400/20 text-white rounded-tl-md shadow-cyan-400/30 border border-cyan-400/30 backdrop-blur-md w-full max-w-full'
             }
             transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.01]
             ${isUser ? 'hover:shadow-yellow-400/40' : 'hover:shadow-cyan-400/40'}
@@ -455,7 +381,7 @@ const MessageBubble = ({ message }) => {
           <div className="w-10 h-10 flex-shrink-0"></div>
           
           {/* Chart Container - matching message width */}
-          <div className="w-full max-w-5xl">
+          <div className="w-full max-w-full">
             <div className="bg-gradient-to-br from-gray-800/30 to-gray-900/30 backdrop-blur-sm rounded-2xl shadow-2xl border border-cyan-400/10 p-1 hover:border-cyan-400/20 transition-all duration-300 w-full">
               <div className="bg-gradient-to-r from-gray-800/80 to-gray-900/80 rounded-xl p-6 border border-gray-700/50">
                 {/* Chart Header */}
