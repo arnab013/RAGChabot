@@ -174,14 +174,14 @@ def handle_search(query: str, context: ConversationContext) -> ApiResponse:
                     break
         
         # Regular semantic search for all other queries (technology searches, complex queries, etc.)
-        results = retriever.search(query)
+        results = retriever.search(query, top_k_return=15)
         if not results:
             return ApiResponse(
                 message="I couldn't find any patents matching your query. Try rephrasing your search or using different keywords."
             )
 
-        # Process results in batches
-        filtered_results = results[:10]
+        # Process results with enhanced information
+        filtered_results = results[:12]
         response = _process_search_results(query, filtered_results, context)
         return ApiResponse(message=remove_similarity_from_text(response) if response else "No response generated.")
     except Exception as e:
@@ -1581,8 +1581,7 @@ def search():
         )
         
         # Classify query type
-        classification = classifier.classify_query(query)
-        
+        classification = classifier.classify_query(query, history)
         # Check which type of query we're dealing with
         query_type = None
         if classifier.should_execute_patent_detail(classification):

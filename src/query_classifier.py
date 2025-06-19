@@ -16,10 +16,87 @@ logger = logging.getLogger(__name__)
 class QueryClassifier:
     """
     Uses LLM to intelligently classify user queries and determine required operations.
+    Includes context relevance analysis to determine when previous conversation context is needed.
     """
     
     def __init__(self):
         self.classification_prompt = self._create_classification_prompt()
+        self.context_relevance_prompt = self._create_context_relevance_prompt()
+    
+    def _create_context_relevance_prompt(self) -> str:
+        """Create the system prompt for analyzing context relevance."""
+        return """You are a context relevance analyzer for a conversational patent search system.
+
+Your task is to analyze a user's current query and determine whether previous conversation context is needed to properly understand and respond to the query.
+
+Consider these factors when determining context relevance:
+
+**CONTEXT IS RELEVANT when:**
+- The query contains pronouns or references that need previous context (e.g., "it", "that patent", "this", "them", "these")
+- The query is a follow-up question (e.g., "tell me more", "show details", "what about", "and what", "also")
+- The query builds on previous discussion (e.g., "compare that with", "similar to what we discussed")
+- The query contains incomplete information that might be clarified by context (e.g., "more details", "the claims")
+- The query asks for additional information about something previously mentioned
+- The query uses relative terms that depend on context (e.g., "the previous one", "that company", "those results")
+
+**CONTEXT IS NOT RELEVANT when:**
+- The query is completely self-contained and standalone
+- The query has all necessary information to understand the intent
+- The query is a greeting or general conversation starter
+- The query explicitly provides all needed details (patent numbers, search terms, etc.)
+- The query is a new topic unrelated to previous conversation
+- The query is a system command or help request
+
+**EXAMPLES:**
+
+User Query: "Find patents about solar energy"
+Analysis: Self-contained search request with clear topic. No pronouns or references needing context.
+Response: {"needs_context": false, "reasoning": "Complete standalone search query with explicit topic"}
+
+User Query: "Show me more details about it"
+Analysis: Contains pronoun "it" that requires previous context to identify what "it" refers to.
+Response: {"needs_context": true, "reasoning": "Pronoun 'it' requires previous context to identify the subject"}
+
+User Query: "What are the claims for patent EP0001556B1?"
+Analysis: Complete query with explicit patent number. Self-contained.
+Response: {"needs_context": false, "reasoning": "Complete query with explicit patent number, no context needed"}
+
+User Query: "Tell me more about that"
+Analysis: "That" is a reference requiring previous context to understand what is being referred to.
+Response: {"needs_context": true, "reasoning": "Reference 'that' requires previous context to identify the subject"}
+
+User Query: "Hello, how are you?"
+Analysis: Standard greeting, completely independent of any previous conversation.
+Response: {"needs_context": false, "reasoning": "Greeting is independent of conversation context"}
+
+User Query: "Show me patents published in 2020"
+Analysis: Complete search criteria provided, no dependencies on previous conversation.
+Response: {"needs_context": false, "reasoning": "Complete search query with explicit criteria"}
+
+User Query: "What about artificial intelligence patents?"
+Analysis: "What about" suggests this is building on previous discussion or comparison.
+Response: {"needs_context": true, "reasoning": "Query structure suggests follow-up or comparison to previous discussion"}
+
+User Query: "How many total patents are there?"
+Analysis: Clear statistical question that doesn't depend on previous context.
+Response: {"needs_context": false, "reasoning": "Self-contained statistical query"}
+
+User Query: "And the publication trends?"
+Analysis: "And" suggests continuation of previous analysis or discussion.
+Response: {"needs_context": true, "reasoning": "Query starts with 'And' indicating continuation of previous analysis"}
+
+User Query: "Get detailed information about that patent we discussed"
+Analysis: Multiple context dependencies: "that patent" and "we discussed" both reference previous conversation.
+Response: {"needs_context": true, "reasoning": "Multiple references to previous conversation context needed"}
+
+Analyze the following query and return a JSON response with:
+{
+    "needs_context": true/false,
+    "reasoning": "brief explanation of why context is or isn't needed",
+    "confidence": 0.95
+}
+
+Query to analyze:"""
     
     def _create_classification_prompt(self) -> str:
         """Create the system prompt for query classification."""
@@ -187,8 +264,7 @@ Now classify the following query:"""
             # Remove the patent number from the query and see what's left
             patent_number = self.extract_patent_number(query)
             query_without_patent = query_lower.replace(patent_number.lower(), "").strip()
-            
-            # If after removing the patent number, there's very little left (just spaces, punctuation),
+              # If after removing the patent number, there's very little left (just spaces, punctuation),
             # then this is just a patent number search, not a detail request
             remaining_words = [word for word in query_without_patent.split() if len(word) > 2]
             
@@ -197,39 +273,56 @@ Now classify the following query:"""
                 return False
         
         return has_detail_indicator and (has_patent_number or has_more_details_request)
+    
+    def analyze_context_relevance(self, user_query: str, conversation_context: Optional[List[Dict]] = None) -> Dict:
+        """
+        Use LLM to determine if previous conversation context is needed for the current query.
+        Returns a dict: {"needs_context": bool, "reasoning": str, "confidence": float}
+        """
+        prompt = self.context_relevance_prompt + f'\n"""\n{user_query}\n"""\n\nJSON response:'
+        try:
+            response = chat([{"role": "user", "content": prompt}])
+            json_start = response.find('{')
+            json_end = response.rfind('}') + 1
+            if json_start != -1 and json_end > json_start:
+                json_str = response[json_start:json_end]
+                result = json.loads(json_str)
+                if "needs_context" in result:
+                    return result
+        except Exception as e:
+            logger.warning(f"Context relevance LLM analysis failed: {e}")
+        # Fallback: if query contains obvious pronouns, assume context is needed
+        pronouns = ["it", "that", "those", "them", "this", "these", "previous", "more", "also", "what about", "and"]
+        needs_context = any(p in user_query.lower() for p in pronouns)
+        return {"needs_context": needs_context, "reasoning": "Fallback pronoun check.", "confidence": 0.5}
 
     def classify_query(self, user_query: str, conversation_context: Optional[List[Dict]] = None) -> Dict:
         """
         Classify a user query to determine required operations.
-        
-        Args:
-            user_query: The user's input query
-            conversation_context: Previous conversation messages for context
-            
-        Returns:
-            Dictionary with classification results
+        Now uses LLM to first analyze if previous context is relevant before including it in the classification prompt.
         """
         try:
-            # Build the full prompt
+            # Analyze if context is needed
+            context_analysis = self.analyze_context_relevance(user_query, conversation_context)
+            needs_context = context_analysis.get("needs_context", False)
+
             prompt = self.classification_prompt
-            
-            # Add conversation context if available
-            if conversation_context:
+            # Only add conversation context if LLM says it's relevant
+            if needs_context and conversation_context:
                 context_str = "\n\nConversation Context (last few messages):\n"
                 for msg in conversation_context[-3:]:  # Last 3 messages for context
                     role = msg.get('role', 'unknown')
                     content = msg.get('content', '')[:200]  # Limit length
                     context_str += f"{role.title()}: {content}\n"
                 prompt += context_str
-            
+
             prompt += f'\n\nUser Query: "{user_query}"\n\nClassification (JSON only):'
-            
+
             # Get LLM classification
             response = chat([{"role": "user", "content": prompt}])
-            
+
             # Parse the JSON response
             try:
-                # Extract JSON from response (in case there's extra text)
                 json_start = response.find('{')
                 json_end = response.rfind('}') + 1
                 if json_start != -1 and json_end > json_start:
@@ -237,18 +330,14 @@ Now classify the following query:"""
                     classification = json.loads(json_str)
                 else:
                     raise ValueError("No JSON found in response")
-                    
             except (json.JSONDecodeError, ValueError) as e:
                 logger.warning(f"Failed to parse LLM classification response: {e}")
-                # Fallback to keyword-based classification
                 return self._fallback_classification(user_query)
-            
-            # Validate and normalize the classification
+
             return self._validate_classification(classification, user_query)
-            
+
         except Exception as e:
             logger.error(f"Error in query classification: {e}")
-            # Fallback to keyword-based classification
             return self._fallback_classification(user_query)
     
     def _validate_classification(self, classification: Dict, user_query: str) -> Dict:
