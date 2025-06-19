@@ -118,7 +118,13 @@ export const transformChartData = (data) => {
     return labels.map((label, index) => {
       const dataPoint = { category: label };
       datasets.forEach((dataset, datasetIndex) => {
-        const key = dataset.label || `value${datasetIndex}`;
+        // For single dataset (pie charts), use 'value' as key, otherwise use label or value{index}
+        let key;
+        if (datasets.length === 1 && !dataset.label) {
+          key = 'value';
+        } else {
+          key = dataset.label || `value${datasetIndex}`;
+        }
         const value = dataset.data?.[index];
         dataPoint[key] = isNaN(Number(value)) ? value : Number(value);
       });
