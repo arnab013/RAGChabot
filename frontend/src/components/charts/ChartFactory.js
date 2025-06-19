@@ -30,8 +30,11 @@ const ChartFactory = ({ chartData }) => {
   const { type } = chartData;
 
   // Route to appropriate chart component based on type
-  switch (type.toLowerCase()) {
-    case 'bar':
+  switch (type.toLowerCase()) {    case 'bar':
+      return <BarChart chartData={chartData} />;
+        case 'horizontalbar':
+    case 'horizontal-bar':
+    case 'horizontal_bar':
       return <BarChart chartData={chartData} />;
       
     case 'line':
@@ -59,9 +62,8 @@ const ChartFactory = ({ chartData }) => {
             <svg className="mx-auto h-8 w-8 text-gray-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p className="text-sm text-gray-400">Unsupported chart type: {type}</p>
-            <p className="text-xs text-gray-500 mt-1">
-              Supported types: bar, line, pie, area, stacked_bar, treemap
+            <p className="text-sm text-gray-400">Unsupported chart type: {type}</p>            <p className="text-xs text-gray-500 mt-1">
+              Supported types: bar, horizontal-bar, line, pie, area, stacked_bar, treemap
             </p>
           </div>
         </div>

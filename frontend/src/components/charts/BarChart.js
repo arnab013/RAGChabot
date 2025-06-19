@@ -18,8 +18,7 @@ const BarChart = ({ chartData, height = 600, maxDataPoints = 20 }) => {
   const limitedData = limitDataPoints(transformedData, maxDataPoints);
   const dataKeys = getDataKeys(limitedData);
   const colors = getChartColors(dataKeys.length);
-  
-  // Get dynamic axis labels
+    // Get dynamic axis labels
   const { xAxisLabel, yAxisLabel } = getAxisLabels(chartData, limitedData);
   
   // Chart configuration
@@ -37,7 +36,7 @@ const BarChart = ({ chartData, height = 600, maxDataPoints = 20 }) => {
         margin={margin}
       >
         <CartesianGrid {...CHART_THEME.grid} />
-          <XAxis 
+        <XAxis 
           dataKey="category"
           {...CHART_THEME.axis}
           angle={-45}
