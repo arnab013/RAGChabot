@@ -3,11 +3,18 @@ Query Manager - Coordinates all specialized query handlers
 """
 from typing import Dict, List, Any, Optional
 from .base import BaseQueryHandler, QueryResponse
-from .publication_trends import PublicationTrendsHandler
-from .sdg_distribution import SDGDistributionHandler
-from .technology_analysis import TechnologyAnalysisHandler
-from .inventor_assignee import InventorAssigneeHandler
-from .geographical_analysis import GeographicalAnalysisHandler
+
+# Import handlers with error handling
+try:
+    from .publication_trends import PublicationTrendsHandler
+    from .sdg_distribution import SDGDistributionHandler
+    from .technology_analysis import TechnologyAnalysisHandler
+    from .inventor_assignee import InventorAssigneeHandler
+    from .geographical_analysis import GeographicalAnalysisHandler
+except ImportError as e:
+    import logging
+    logging.error(f"Error importing handlers: {e}")
+    raise
 
 
 class QueryManager:
@@ -22,8 +29,7 @@ class QueryManager:
             'inventor_assignee': InventorAssigneeHandler(),
             'geographical_analysis': GeographicalAnalysisHandler()
         }
-        
-        # Build keyword mapping for quick lookup
+          # Build keyword mapping for quick lookup
         self.keyword_map = self._build_keyword_map()
     
     def _build_keyword_map(self) -> Dict[str, str]:
@@ -45,21 +51,86 @@ class QueryManager:
             
             if handler_name and handler_name in self.handlers:
                 handler = self.handlers[handler_name]
-                return handler.handle_query(query, **kwargs)
+                try:
+                    result = handler.handle_query(query, **kwargs)
+                    # Check if the result has an error message indicating failure
+                    if result.message and "Error:" in result.message:
+                        print(f"SQL handler {handler_name} failed, falling back to semantic search...")
+                        return self._fallback_to_semantic_search(query, **kwargs)
+                    return result
+                except Exception as e:
+                    print(f"SQL handler {handler_name} threw exception: {str(e)}, falling back to semantic search...")
+                    return self._fallback_to_semantic_search(query, **kwargs)
             else:
-                # Default fallback
+                # No specific handler found, use semantic search
+                return self._fallback_to_semantic_search(query, **kwargs)
+        except Exception as e:
+            # Generate dynamic error message for general query manager failures
+            try:
+                from ..llm_clients import chat
+                
+                prompt = f"""
+A user asked: "{query}"
+
+The patent analytics system encountered an unexpected error while processing this query.
+
+Generate a helpful, user-friendly message that:
+1. Acknowledges their request
+2. Explains that there was a system issue
+3. Suggests they try rephrasing their question or try a simpler query
+4. Maintains a professional and helpful tone
+
+Keep it concise (2-3 sentences) and avoid technical details.
+"""
+                
+                messages = [{"role": "user", "content": prompt}]
+                error_message = chat(messages, temperature=0.7, max_tokens=150)
+                return QueryResponse(message=error_message.strip())
+                
+            except Exception:
+                # Only use placeholder when LLM is unavailable
                 return QueryResponse(
-                    message="I'm not sure how to handle that query. Please try asking about publication trends, SDG distribution, technology analysis, inventors, assignees, or geographical distribution."
+                    message="My server is currently under maintenance. Please try again later or contact the developer for assistance."
+                )
+    
+    def _fallback_to_semantic_search(self, query: str, **kwargs) -> QueryResponse:
+        """Fallback to semantic search when SQL handlers fail"""
+        try:
+            # Import here to avoid circular imports
+            from ..retrieval import PatentRetriever
+            from ..summarise import PatentSummarizer
+            
+            # Use semantic search
+            retriever = PatentRetriever()
+            chunks = retriever.search(query, k=10)
+            
+            if chunks:
+                # Use summarizer to generate response
+                summarizer = PatentSummarizer()
+                response = summarizer.generate_summary(chunks, query)
+                
+                return QueryResponse(
+                    message=response,
+                    data={'search_results': [{'content': chunk.content, 'metadata': chunk.metadata} for chunk in chunks]}
+                )
+            else:
+                return QueryResponse(
+                    message="I couldn't find relevant information for your query. Please try rephrasing or asking about specific aspects of the patent data."
                 )
                 
         except Exception as e:
             return QueryResponse(
-                message=f"Sorry, I encountered an error processing your query: {str(e)}"
+                message=f"I apologize, but I'm having trouble processing your query right now. Please try again later."
             )
     
     def _identify_handler(self, query: str) -> Optional[str]:
         """Identify which handler should process the query"""
         query_lower = query.lower()
+        
+        # First check for exact multi-word matches (prioritize more specific phrases)
+        for keyword, handler_name in self.keyword_map.items():
+            if ' ' in keyword and keyword in query_lower:  # Multi-word keywords have priority
+                return handler_name
         
         # Count keyword matches for each handler
         handler_scores = {}
@@ -68,7 +139,9 @@ class QueryManager:
             if keyword in query_lower:
                 if handler_name not in handler_scores:
                     handler_scores[handler_name] = 0
-                handler_scores[handler_name] += 1
+                # Give higher weight to longer, more specific keywords
+                weight = len(keyword.split()) * 2 if ' ' in keyword else 1
+                handler_scores[handler_name] += weight
         
         # Return handler with highest score
         if handler_scores:
@@ -95,7 +168,7 @@ class QueryManager:
     def __enter__(self):
         return self
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_tb, exc_traceback):
         self.close_all()
 
 
@@ -105,39 +178,3 @@ def handle_query(query: str, **kwargs) -> Dict[str, Any]:
     with QueryManager() as manager:
         response = manager.route_query(query, **kwargs)
         return response.to_dict()
-
-
-# Test function
-def test_query_manager():
-    """Test the query manager with various queries"""
-    test_queries = [
-        "Show me patent publication trends in last 12 months",
-        "What's the SDG distribution?", 
-        "Technology analysis by CPC classification",
-        "Top 10 inventors",
-        "Leading assignee companies",
-        "Geographical distribution by country",
-        "Compare publication trends 2023 vs 2025",
-        "Trends in 2024"
-    ]
-    
-    with QueryManager() as manager:
-        print("=== Testing Query Manager ===\n")
-        
-        for query in test_queries:
-            print(f"Query: '{query}'")
-            handler_name = manager._identify_handler(query)
-            print(f"Handler: {handler_name}")
-            
-            try:
-                response = manager.route_query(query)
-                print(f"Response: {response.message[:100]}...")
-                print(f"Chart: {'Yes' if response.chart else 'No'}")
-            except Exception as e:
-                print(f"Error: {e}")
-            
-            print("-" * 50)
-
-
-if __name__ == "__main__":
-    test_query_manager()

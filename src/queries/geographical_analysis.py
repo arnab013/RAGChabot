@@ -14,8 +14,9 @@ class GeographicalAnalysisHandler(BaseQueryHandler):
     def get_query_keywords(self) -> List[str]:
         """Keywords that identify geographical queries"""
         return [
-            "country", "countries", "region", "geographical", "location",
-            "origin", "priority", "nationality", "global", "international"
+            "country", "countries", "region", "geographical", "geographical distribution", 
+            "location", "origin", "priority", "nationality", "global", "international",
+            "by country", "per country", "country wise", "countrywise"
         ]
     
     def handle_query(self, query: str, **kwargs) -> QueryResponse:
@@ -55,34 +56,54 @@ class GeographicalAnalysisHandler(BaseQueryHandler):
             country_data = [
                 {'country': country, 'count': count}
                 for country, count in top_countries
-            ]
-            
-            # Generate response
+            ]            # Generate response
             response_lines = self._format_geographical_response(country_data, limit)
-            
             # Generate chart
             if country_data:
                 labels = [item['country'] for item in country_data]
                 values = [item['count'] for item in country_data]
-                chart = ChartGenerator.generate_bar_chart(labels, values, f"Top {limit} Countries by Patent Count")
+                chart = ChartGenerator.generate_horizontal_bar_chart(labels, values, f"Top {limit} Countries by Patent Count")
             else:
                 chart = None
             
-            # Generate simple insight and takeaway
-            insight = "This chart shows the top countries by patent filings."
-            takeaway = "Identify which countries are leading in innovation based on patent activity."
+            # Generate dynamic insights and takeaway
+            data_summary = f"Top {limit} countries by patent count. Data shows {len(country_data)} countries with their patent filing counts."
+            insights = self.generate_dynamic_insights(query_lower, chart or {}, data_summary)
+            
             return QueryResponse(
                 message="\n".join(response_lines),
                 chart=chart,
                 data={'country_stats': country_data},
-                insight=insight,
-                takeaway=takeaway
+                insight=insights['insight'],
+                takeaway=insights['takeaway']
             )
-            
-        except Exception as e:
-            return QueryResponse(
-                message=f"Sorry, I couldn't retrieve the geographical analysis. Error: {str(e)}"
-            )
+        except Exception as e:            # Use dynamic LLM-based error message generation
+            try:
+                from ..llm_clients import chat
+                
+                prompt = f"""
+A user asked: "{query}"
+
+The patent analytics system encountered an error while analyzing geographical data: {str(e)}
+
+Generate a helpful, user-friendly message that:
+1. Acknowledges their request for geographical analysis
+2. Explains that there was an issue processing the data
+3. Suggests they try a different approach or query
+4. Maintains a professional and helpful tone
+
+Keep it concise (2-3 sentences) and avoid technical details.
+"""
+                
+                messages = [{"role": "user", "content": prompt}]
+                error_message = chat(messages, temperature=0.7, max_tokens=150)
+                return QueryResponse(message=error_message.strip())
+                
+            except Exception:
+                # Only use placeholder when LLM is unavailable
+                return QueryResponse(
+                    message="I'm unable to analyze geographical patent data at the moment. Please try again later or try a different type of query."
+                )
     
     def _format_geographical_response(self, country_data: List[Dict], limit: int) -> List[str]:
         """Format geographical analysis response"""

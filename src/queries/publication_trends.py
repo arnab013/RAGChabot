@@ -44,9 +44,12 @@ class PublicationTrendsHandler(BaseQueryHandler):
                 return self._handle_relative_months(query, {'months_back': 12, 'title': 'Publication Trends (Last 12 Months)'})
                 
         except Exception as e:
-            return QueryResponse(
-                message=f"Sorry, I couldn't retrieve the publication trends. Error: {str(e)}"
+            error_message = self.generate_error_message(
+                query=query,
+                error_type="publication_trends_error",
+                technical_error=str(e)
             )
+            return QueryResponse(message=error_message)
     
     def _parse_query(self, query_lower: str) -> Dict[str, Any]:
         """Parse query to extract parameters"""

@@ -15,7 +15,8 @@ class SDGDistributionHandler(BaseQueryHandler):
         """Keywords that identify SDG distribution queries"""
         return [
             "sdg", "sdgs", "sustainable development", "sustainable development goals",
-            "distribution", "breakdown", "categories", "goals"        ]
+            "sdg distribution", "sdg breakdown", "categories", "goals"
+        ]
     
     def handle_query(self, query: str, **kwargs) -> QueryResponse:
         """Handle SDG distribution query"""
@@ -40,16 +41,18 @@ class SDGDistributionHandler(BaseQueryHandler):
             
             return QueryResponse(
                 message="\n".join(response_lines),
-                chart=chart,
-                data={'sdg_distribution': sdg_data},
+                chart=chart,                data={'sdg_distribution': sdg_data},
                 insight=insights["insight"],
                 takeaway=insights["takeaway"]
             )
             
         except Exception as e:
-            return QueryResponse(
-                message=f"Sorry, I couldn't retrieve the SDG distribution. Error: {str(e)}"
+            error_message = self.generate_error_message(
+                query=query,
+                error_type="sdg_distribution_error",
+                technical_error=str(e)
             )
+            return QueryResponse(message=error_message)
     
     def _get_sdg_distribution(self) -> List[Dict[str, Any]]:
         """Get SDG distribution from database"""

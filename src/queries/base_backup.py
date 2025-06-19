@@ -96,48 +96,33 @@ Format your response as JSON:
                     if '"insight"' in line.lower():
                         insight = line.split(':', 1)[-1].strip().strip('",')
                     elif '"takeaway"' in line.lower():
-                        takeaway = line.split(':', 1)[-1].strip().strip('",')                
+                        takeaway = line.split(':', 1)[-1].strip().strip('",')
+                
                 return {
                     "insight": insight or "The data reveals meaningful trends that demonstrate innovation patterns across the patent landscape.",
                     "takeaway": takeaway or "These analytical findings provide actionable intelligence for strategic research and development planning."
                 }
-                
-        except Exception as e:
+                  except Exception as e:
             logger.warning(f"Failed to generate dynamic insights: {e}")
             # Return fallback insights
             return {
                 "insight": "The patent analysis reveals significant trends that demonstrate important innovation patterns across the technology landscape.",
                 "takeaway": "These insights provide valuable intelligence for strategic research planning and competitive positioning in key innovation areas."
             }
+5. Does NOT include technical error details
 
-    def generate_error_message(self, query: str, error_type: str, technical_error: str) -> str:
-        """Generate user-friendly error message using LLM if available"""
-        try:
-            # Import here to avoid circular imports
-            from ..llm_clients import chat
-            
-            prompt = f"""
-A user asked: "{query}"
-
-The patent analytics system encountered an error ({error_type}): {technical_error}
-
-Generate a helpful, user-friendly message that:
-1. Acknowledges their request
-2. Explains that there was an issue processing the data
-3. Suggests they try a different approach or query
-4. Maintains a professional and helpful tone
-
-Keep it concise (2-3 sentences) and avoid technical details.
+Keep the response concise (2-3 sentences max) and focused on helping the user get the information they need.
 """
             
             messages = [{"role": "user", "content": prompt}]
-            error_message = chat(messages, temperature=0.7, max_tokens=150)
-            return error_message.strip()
+            response = chat(messages, temperature=0.7, max_tokens=200)
             
-        except Exception as e:
-            logger.warning(f"Failed to generate dynamic error message: {e}")
-            # Fallback to static error message when LLM is unavailable
-            return "I'm unable to process your query at the moment. Please try again later or try a different type of query."
+            # Return the LLM-generated message
+            return response.strip()
+            
+        except Exception as llm_error:
+            # Only use placeholder when LLM is unavailable
+            return "My server is currently under maintenance. Please try again later or contact the developer for assistance."
 
     def close(self):
         """Close database session"""

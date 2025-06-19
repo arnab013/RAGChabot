@@ -15,18 +15,22 @@ class TechnologyAnalysisHandler(BaseQueryHandler):
         """Keywords that identify technology analysis queries"""
         return [
             "technology", "tech", "classification", "class", "cpc",
-            "ipc", "category", "field", "domain", "sector"        ]
+            "ipc", "category", "field", "domain", "sector"
+        ]
     
     def handle_query(self, query: str, **kwargs) -> QueryResponse:
         """Handle technology analysis query"""
         try:
             # Use IPC analysis since it's available in the database
             return self._handle_ipc_analysis(query)
-                
+            
         except Exception as e:
-            return QueryResponse(
-                message=f"Sorry, I couldn't retrieve the technology analysis. Error: {str(e)}"
+            error_message = self.generate_error_message(
+                query=query,
+                error_type="technology_analysis_error",
+                technical_error=str(e)
             )
+            return QueryResponse(message=error_message)
     
     def _handle_ipc_analysis(self, query: str) -> QueryResponse:
         """Handle IPC classification analysis"""
