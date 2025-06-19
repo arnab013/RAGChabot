@@ -1,6 +1,7 @@
 """
 Intelligent query classification using LLM to determine query types and needed operations.
 """
+import re
 import json
 import logging
 from typing import Dict, List, Optional
@@ -24,17 +25,19 @@ class QueryClassifier:
         """Create the system prompt for query classification."""
         return """You are an intelligent query classifier for a patent search and analytics system. 
 
-Your task is to analyze user queries and determine what type(s) of operations are needed. The system supports three main query types:
+Your task is to analyze user queries and determine what type(s) of operations are needed. The system supports four main query types:
 
 1. **CONVERSATION**: General chat, greetings, questions about the system, help requests, or non-patent/non-statistical queries
 2. **PATENT_SEARCH**: Requests to find specific patents, inventions, or patent information based on technology, content, or criteria
-3. **STATISTICS**: Requests for data analysis, charts, trends, counts, distributions, or statistical insights about the patent database
+3. **PATENT_DETAIL**: Requests for detailed information about a specific patent using patent numbers (e.g., "show details of EP0001556B1", "tell me about patent US1234567")
+4. **STATISTICS**: Requests for data analysis, charts, trends, counts, distributions, or statistical insights about the patent database
 
 IMPORTANT CLASSIFICATION RULES:
 - A single user query can require MULTIPLE query types (e.g., "Find solar energy patents and show me the publication trends")
 - Always classify based on the USER'S INTENT, not just keywords
 - Consider conversation context when provided
 - Be precise - don't over-classify simple requests
+- PATENT_DETAIL is for specific patent number lookups, PATENT_SEARCH is for finding patents by criteria
 
 For each query, return a JSON response with:
 {
@@ -43,6 +46,7 @@ For each query, return a JSON response with:
     "confidence": 0.95,
     "specific_requests": {
         "patent_search": "extracted search terms or null",
+        "patent_detail": "extracted patent number or null",
         "statistics": "specific statistics requested or null",
         "conversation": "conversational intent or null"
     }
@@ -55,7 +59,7 @@ Response: {
     "query_types": ["CONVERSATION"],
     "reasoning": "Simple greeting with no patent or statistical intent",
     "confidence": 0.99,
-    "specific_requests": {"patent_search": null, "statistics": null, "conversation": "greeting"}
+    "specific_requests": {"patent_search": null, "patent_detail": null, "statistics": null, "conversation": "greeting"}
 }
 
 User: "Find patents about solar energy"
@@ -63,7 +67,23 @@ Response: {
     "query_types": ["PATENT_SEARCH"],
     "reasoning": "Direct request to find specific patents by technology",
     "confidence": 0.98,
-    "specific_requests": {"patent_search": "solar energy", "statistics": null, "conversation": null}
+    "specific_requests": {"patent_search": "solar energy", "patent_detail": null, "statistics": null, "conversation": null}
+}
+
+User: "Show me details of patent EP0001556B1"
+Response: {
+    "query_types": ["PATENT_DETAIL"],
+    "reasoning": "Request for detailed information about a specific patent number",
+    "confidence": 0.99,
+    "specific_requests": {"patent_search": null, "patent_detail": "EP0001556B1", "statistics": null, "conversation": null}
+}
+
+User: "Tell me about patent US1234567"
+Response: {
+    "query_types": ["PATENT_DETAIL"],
+    "reasoning": "Request for information about a specific patent number",
+    "confidence": 0.98,
+    "specific_requests": {"patent_search": null, "patent_detail": "US1234567", "statistics": null, "conversation": null}
 }
 
 User: "How many patents are in the database?"
@@ -71,7 +91,7 @@ Response: {
     "query_types": ["STATISTICS"],
     "reasoning": "Request for database count statistics",
     "confidence": 0.97,
-    "specific_requests": {"patent_search": null, "statistics": "total patent count", "conversation": null}
+    "specific_requests": {"patent_search": null, "patent_detail": null, "statistics": "total patent count", "conversation": null}
 }
 
 User: "Show me the distribution of patents by SDG"
@@ -79,7 +99,7 @@ Response: {
     "query_types": ["STATISTICS"],
     "reasoning": "Request for data visualization and statistical analysis of SDG distribution",
     "confidence": 0.98,
-    "specific_requests": {"patent_search": null, "statistics": "SDG distribution visualization", "conversation": null}
+    "specific_requests": {"patent_search": null, "patent_detail": null, "statistics": "SDG distribution visualization", "conversation": null}
 }
 
 User: "Which countries have the most patents?"
@@ -87,7 +107,7 @@ Response: {
     "query_types": ["STATISTICS"],
     "reasoning": "Request for statistical analysis and ranking of countries by patent count",
     "confidence": 0.96,
-    "specific_requests": {"patent_search": null, "statistics": "top countries by patent count", "conversation": null}
+    "specific_requests": {"patent_search": null, "patent_detail": null, "statistics": "top countries by patent count", "conversation": null}
 }
 
 User: "Find artificial intelligence patents and show me the publication trends by year"
@@ -95,10 +115,41 @@ Response: {
     "query_types": ["PATENT_SEARCH", "STATISTICS"],
     "reasoning": "Combination request: search for AI patents AND trend analysis",
     "confidence": 0.95,
-    "specific_requests": {"patent_search": "artificial intelligence", "statistics": "publication trends by year", "conversation": null}
+    "specific_requests": {"patent_search": "artificial intelligence", "patent_detail": null, "statistics": "publication trends by year", "conversation": null}
 }
 
 Now classify the following query:"""
+
+    def extract_patent_number(self, query: str) -> Optional[str]:
+        """Extract patent number from query using regex patterns."""
+        # Common patent number patterns
+        patterns = [
+            r'\b(EP\d{7}[A-Z]\d?)\b',  # European patents: EP0001556B1
+            r'\b(US\d{7,8}[A-Z]?\d?)\b',  # US patents: US1234567A1
+            r'\b(WO\d{4}/\d{6}[A-Z]?\d?)\b',  # WIPO patents: WO2023/123456A1
+            r'\b([A-Z]{2}\d{7,8}[A-Z]?\d?)\b',  # General format: XX1234567A1
+            r'\b(\d{7,8}[A-Z]?\d?)\b',  # Just numbers with optional letter/digit
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, query, re.IGNORECASE)
+            if match:
+                return match.group(1).upper()
+        return None
+
+    def is_patent_detail_query(self, query: str) -> bool:
+        """Check if query is asking for details about a specific patent."""
+        query_lower = query.lower()
+        detail_indicators = [
+            "details of", "detail of", "information about", "tell me about",
+            "show me", "what is", "describe", "explain", "about patent"
+        ]
+        
+        # Check if query contains both a detail indicator and a patent number
+        has_detail_indicator = any(indicator in query_lower for indicator in detail_indicators)
+        has_patent_number = self.extract_patent_number(query) is not None
+        
+        return has_detail_indicator and has_patent_number
 
     def classify_query(self, user_query: str, conversation_context: Optional[List[Dict]] = None) -> Dict:
         """
@@ -159,14 +210,17 @@ Now classify the following query:"""
             # Ensure required fields exist
             if "query_types" not in classification:
                 raise ValueError("Missing query_types field")
-            
-            # Normalize query types
-            valid_types = {"CONVERSATION", "PATENT_SEARCH", "STATISTICS"}
+              # Normalize query types
+            valid_types = {"CONVERSATION", "PATENT_SEARCH", "PATENT_DETAIL", "STATISTICS"}
             query_types = [qt.upper().replace(" ", "_") for qt in classification["query_types"]]
             query_types = [qt for qt in query_types if qt in valid_types]
             
             if not query_types:
                 query_types = ["CONVERSATION"]  # Default fallback
+            
+            # Double-check for patent detail queries using regex
+            if self.is_patent_detail_query(user_query) and "PATENT_DETAIL" not in query_types:
+                query_types.append("PATENT_DETAIL")
             
             # Ensure confidence is reasonable
             confidence = float(classification.get("confidence", 0.7))
@@ -175,7 +229,11 @@ Now classify the following query:"""
             # Clean up specific requests
             specific_requests = classification.get("specific_requests", {})
             if not isinstance(specific_requests, dict):
-                specific_requests = {"patent_search": None, "statistics": None, "conversation": None}
+                specific_requests = {"patent_search": None, "patent_detail": None, "statistics": None, "conversation": None}
+            
+            # Extract patent number if it's a detail query
+            if "PATENT_DETAIL" in query_types and not specific_requests.get("patent_detail"):
+                specific_requests["patent_detail"] = self.extract_patent_number(user_query)
             
             return {
                 "query_types": query_types,
@@ -209,18 +267,22 @@ Now classify the following query:"""
             "what countries", "which countries", "main technology", "technology breakdown",
             "patent trends", "publication trends", "sdg", "goal", "field", "applicant"
         ]
-        
-        # Conversational keywords
+          # Conversational keywords
         conversation_keywords = [
             "hello", "hi", "help", "how are you", "what can you do", "thanks",
             "goodbye", "explain", "tell me about"
         ]
         
         query_types = []
-        specific_requests = {"patent_search": None, "statistics": None, "conversation": None}
+        specific_requests = {"patent_search": None, "patent_detail": None, "statistics": None, "conversation": None}
+        
+        # Check for patent detail queries first (most specific)
+        if self.is_patent_detail_query(user_query):
+            query_types.append("PATENT_DETAIL")
+            specific_requests["patent_detail"] = self.extract_patent_number(user_query)
         
         # Check for patent search
-        if any(keyword in query_lower for keyword in patent_keywords):
+        elif any(keyword in query_lower for keyword in patent_keywords):
             query_types.append("PATENT_SEARCH")
             specific_requests["patent_search"] = user_query
         
@@ -233,6 +295,11 @@ Now classify the following query:"""
         if any(keyword in query_lower for keyword in conversation_keywords) or not query_types:
             query_types.append("CONVERSATION")
             specific_requests["conversation"] = user_query
+        
+        # Check for patent detail
+        if self.is_patent_detail_query(user_query):
+            query_types.append("PATENT_DETAIL")
+            specific_requests["patent_detail"] = self.extract_patent_number(user_query)
         
         # Default to conversation if nothing else matches
         if not query_types:
@@ -259,6 +326,10 @@ Now classify the following query:"""
         """Determine if conversational response should be generated."""
         return "CONVERSATION" in classification.get("query_types", [])
     
+    def should_execute_patent_detail(self, classification: Dict) -> bool:
+        """Determine if a patent detail lookup should be executed."""
+        return "PATENT_DETAIL" in classification.get("query_types", [])
+    
     def get_search_terms(self, classification: Dict) -> Optional[str]:
         """Extract search terms for patent search."""
         specific = classification.get("specific_requests", {})
@@ -273,3 +344,8 @@ Now classify the following query:"""
         """Extract conversational intent."""
         specific = classification.get("specific_requests", {})
         return specific.get("conversation")
+    
+    def get_patent_number(self, classification: Dict) -> Optional[str]:
+        """Extract patent number for patent detail lookup."""
+        specific = classification.get("specific_requests", {})
+        return specific.get("patent_detail")

@@ -199,6 +199,216 @@ def handle_conversation(query: str, context: ConversationContext) -> ApiResponse
             error=str(e)
         )
 
+def handle_patent_detail(query: str, patent_number: str, context: ConversationContext) -> ApiResponse:
+    """Handle patent detail lookup queries"""
+    try:
+        from database.config import get_db_session_simple
+        from database.models import Patent
+        
+        # Normalize patent number - remove common prefixes and handle different formats
+        normalized_number = patent_number.upper()
+        
+        # Remove common prefixes
+        for prefix in ['EP', 'US', 'WO']:
+            if normalized_number.startswith(prefix):
+                normalized_number = normalized_number[len(prefix):]
+                break
+        
+        # Remove leading zeros and non-numeric suffixes (like B1, A1, etc.)
+        # Extract just the numeric part
+        import re
+        numeric_match = re.search(r'(\d+)', normalized_number)
+        if numeric_match:
+            numeric_part = numeric_match.group(1).lstrip('0') or '0'
+        else:
+            numeric_part = normalized_number
+        
+        # Query database for the patent
+        session = get_db_session_simple()
+        
+        try:
+            # Try exact match first
+            patent = session.query(Patent).filter(
+                Patent.publication_number == patent_number
+            ).first()
+            
+            # If not found, try without prefix
+            if not patent and normalized_number != patent_number:
+                patent = session.query(Patent).filter(
+                    Patent.publication_number == normalized_number
+                ).first()
+            
+            # If still not found, try with just the numeric part
+            if not patent and numeric_part != normalized_number:
+                patent = session.query(Patent).filter(
+                    Patent.publication_number == numeric_part
+                ).first()
+            
+            # If still not found, try with original number without leading zeros
+            if not patent:
+                original_no_zeros = patent_number.lstrip('0')
+                if original_no_zeros != patent_number:
+                    patent = session.query(Patent).filter(
+                        Patent.publication_number == original_no_zeros
+                    ).first()
+            
+            if not patent:
+                return ApiResponse(
+                    message=f"I apologize, but I couldn't find patent {patent_number} in my database. "
+                           f"Please check the patent number and try again. You can also search for patents "
+                           f"by technology or keywords to find relevant patents.",
+                    error="Patent not found"
+                )
+            
+            # Format the patent details response
+            response = _format_patent_details(patent, patent_number)
+            return ApiResponse(message=response)
+            
+        finally:
+            session.close()
+            
+    except Exception as e:
+        return ApiResponse(
+            message=f"I encountered an error while looking up patent {patent_number}. Please try again.",
+            error=str(e)
+        )
+
+def _format_patent_details(patent, requested_number: str) -> str:
+    """Format patent details into a readable response"""
+    import json
+    from datetime import datetime
+    
+    # Format the complete patent number
+    country = patent.publication_country or ""
+    number = patent.publication_number or ""
+    kind = patent.publication_kind or ""
+    
+    # Create properly formatted patent number
+    if country and number:
+        if kind:
+            formatted_number = f"{country}{number.zfill(7)}{kind}"
+        else:
+            formatted_number = f"{country}{number.zfill(7)}"
+    else:
+        formatted_number = number
+    
+    # Basic patent information
+    title = patent.title_en or "Title not available"
+    
+    # Publication date formatting
+    pub_date = "Date not available"
+    if patent.publication_date:
+        try:
+            if isinstance(patent.publication_date, str):
+                date_obj = datetime.strptime(patent.publication_date, "%Y-%m-%d")
+            else:
+                date_obj = patent.publication_date
+            pub_date = date_obj.strftime("%B %d, %Y")
+        except:
+            pub_date = str(patent.publication_date)
+    
+    response = f"# Patent Details: {formatted_number}\n\n"
+    response += f"**Title:** {title}\n\n"
+    response += f"**Publication Date:** {pub_date}\n\n"
+    
+    # Abstract
+    if patent.abstract_text:
+        abstract = patent.abstract_text.strip()
+        if len(abstract) > 500:
+            abstract = abstract[:500] + "..."
+        response += f"**Abstract:**\n{abstract}\n\n"
+    
+    # Inventors and Applicants
+    try:
+        if patent.inventor_names:
+            inventors = json.loads(patent.inventor_names) if isinstance(patent.inventor_names, str) else patent.inventor_names
+            if inventors and isinstance(inventors, list):
+                response += f"**Inventors:** {', '.join(inventors[:5])}"
+                if len(inventors) > 5:
+                    response += f" (and {len(inventors) - 5} more)"
+                response += "\n\n"
+        
+        if patent.applicant_names:
+            applicants = json.loads(patent.applicant_names) if isinstance(patent.applicant_names, str) else patent.applicant_names
+            if applicants and isinstance(applicants, list):
+                response += f"**Applicants:** {', '.join(applicants[:3])}"
+                if len(applicants) > 3:
+                    response += f" (and {len(applicants) - 3} more)"
+                response += "\n\n"
+    except:
+        pass  # Skip if JSON parsing fails
+    
+    # Countries
+    try:
+        if patent.applicant_countries:
+            countries = json.loads(patent.applicant_countries) if isinstance(patent.applicant_countries, str) else patent.applicant_countries
+            if countries and isinstance(countries, list):
+                response += f"**Countries:** {', '.join(set(countries))}\n\n"
+    except:
+        pass
+    
+    # IPC Classification
+    try:
+        if patent.ipc:
+            ipc_data = json.loads(patent.ipc) if isinstance(patent.ipc, str) else patent.ipc
+            if ipc_data and isinstance(ipc_data, list):
+                response += f"**IPC Classification:** {', '.join(ipc_data[:5])}"
+                if len(ipc_data) > 5:
+                    response += f" (and {len(ipc_data) - 5} more)"
+                response += "\n\n"
+    except:
+        pass
+    
+    # Technology fields
+    try:
+        if patent.ipc_technologies:
+            tech_data = json.loads(patent.ipc_technologies) if isinstance(patent.ipc_technologies, str) else patent.ipc_technologies
+            if tech_data and isinstance(tech_data, list):
+                response += f"**Technology Areas:** {', '.join(tech_data[:5])}"
+                if len(tech_data) > 5:
+                    response += f" (and {len(tech_data) - 5} more)"
+                response += "\n\n"
+    except:
+        pass
+    
+    # SDG information
+    try:
+        if patent.sdg_number:
+            sdg_data = json.loads(patent.sdg_number) if isinstance(patent.sdg_number, str) else patent.sdg_number
+            if sdg_data and isinstance(sdg_data, list):
+                sdg_list = [f"SDG {num}" for num in sdg_data if isinstance(num, int)]
+                if sdg_list:
+                    response += f"**Related UN SDGs:** {', '.join(sdg_list)}\n\n"
+    except:
+        pass
+    
+    # Analysis and explanations
+    if patent.analysis_explanation:
+        try:
+            analysis = json.loads(patent.analysis_explanation) if isinstance(patent.analysis_explanation, str) else patent.analysis_explanation
+            if isinstance(analysis, str):
+                analysis_text = analysis.strip()
+            elif isinstance(analysis, dict) and 'text' in analysis:
+                analysis_text = analysis['text'].strip()
+            else:
+                analysis_text = str(analysis).strip()
+            
+            if analysis_text and len(analysis_text) > 50:
+                if len(analysis_text) > 300:
+                    analysis_text = analysis_text[:300] + "..."
+                response += f"**Technical Analysis:**\n{analysis_text}\n\n"
+        except:
+            pass
+    
+    response += "---\n\n"
+    response += "💡 **Need more information?** You can ask me to:\n"
+    response += "• Find related patents in the same technology area\n"
+    response += "• Show patents by the same inventors or applicants\n"
+    response += "• Search for patents citing this one\n"
+    response += "• Analyze patent trends in this field"
+    
+    return response
+
 def _process_search_results(query: str, results: List[Dict], context: ConversationContext) -> str:
     """Process search results and generate response"""
     batches = _batch_results(results)
@@ -579,7 +789,9 @@ def search():
         
         # Check which type of query we're dealing with
         query_type = None
-        if classifier.should_execute_patent_search(classification):
+        if classifier.should_execute_patent_detail(classification):
+            query_type = 'patent_detail'
+        elif classifier.should_execute_patent_search(classification):
             query_type = 'patent_search'
         elif classifier.should_execute_statistics(classification):
             query_type = 'statistics'
@@ -588,6 +800,7 @@ def search():
         
         # Route to appropriate handler
         handler_map = {
+            'patent_detail': lambda q, c: handle_patent_detail(q, classifier.get_patent_number(classification), c),
             'patent_search': handle_search,
             'statistics': handle_stats,
             'conversation': handle_conversation

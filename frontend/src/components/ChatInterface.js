@@ -382,7 +382,7 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
       {/* Input Area */}
       <div className="flex-shrink-0 bg-gray-800/90 backdrop-blur-sm border-t border-gray-700/50 px-6 py-4">
         <div className="flex items-end space-x-4 max-w-3xl mx-auto">
-          <div className="flex-1 relative">
+          <div className="flex-1 relative chat-input-container">
             <textarea
               ref={inputRef}
               value={inputValue}
@@ -392,10 +392,10 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
               className="w-full resize-none bg-gray-700 border border-gray-600 rounded-2xl px-4 py-3 pr-12
                        focus:ring-2 focus:ring-cyan-400 focus:border-transparent focus:bg-gray-600
                        transition-all duration-200 placeholder-gray-400 text-white
-                       min-h-[48px] max-h-[120px] leading-relaxed"
+                       min-h-[48px] max-h-[120px] leading-relaxed overflow-hidden"
               rows={1}
               disabled={isThinking}
-              style={{ height: '48px' }}
+              style={{ height: '48px', resize: 'none' }}
             />
             <button
               onClick={sendMessage}
@@ -404,7 +404,7 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
                        text-white rounded-xl hover:from-cyan-500 hover:to-blue-600
                        disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-cyan-400 
                        disabled:hover:to-blue-500 transform transition-all duration-200 
-                       hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+                       hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl z-10"
             >
               {isThinking ? (
                 <Loader2 size={18} className="animate-spin" />
