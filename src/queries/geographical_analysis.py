@@ -68,10 +68,15 @@ class GeographicalAnalysisHandler(BaseQueryHandler):
             else:
                 chart = None
             
+            # Generate simple insight and takeaway
+            insight = "This chart shows the top countries by patent filings."
+            takeaway = "Identify which countries are leading in innovation based on patent activity."
             return QueryResponse(
                 message="\n".join(response_lines),
                 chart=chart,
-                data={'country_stats': country_data}
+                data={'country_stats': country_data},
+                insight=insight,
+                takeaway=takeaway
             )
             
         except Exception as e:

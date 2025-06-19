@@ -84,10 +84,15 @@ class InventorAssigneeHandler(BaseQueryHandler):
         else:
             chart = None
         
+        # Generate simple insight and takeaway
+        insight = "This chart shows the most prolific inventors in the dataset."
+        takeaway = "Identify key inventors driving innovation in this field."
         return QueryResponse(
             message="\n".join(response_lines),
             chart=chart,
-            data={'inventor_stats': inventor_data}
+            data={'inventor_stats': inventor_data},
+            insight=insight,
+            takeaway=takeaway
         )
     
     def _handle_assignee_analysis(self, query_lower: str) -> QueryResponse:
@@ -137,10 +142,15 @@ class InventorAssigneeHandler(BaseQueryHandler):
         else:
             chart = None
         
+        # Generate simple insight and takeaway
+        insight = "This chart shows the most active assignees (companies/organizations)."
+        takeaway = "See which organizations are leading in patent filings."
         return QueryResponse(
             message="\n".join(response_lines),
             chart=chart,
-            data={'assignee_stats': assignee_data}
+            data={'assignee_stats': assignee_data},
+            insight=insight,
+            takeaway=takeaway
         )
     
     def _handle_combined_analysis(self) -> QueryResponse:

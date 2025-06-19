@@ -33,10 +33,15 @@ class SDGDistributionHandler(BaseQueryHandler):
             # Generate chart
             chart = self._generate_sdg_chart(sdg_data)
             
+            # Generate simple insight and takeaway
+            insight = "This chart shows the distribution of patents across SDGs."
+            takeaway = "Identify which SDGs are most addressed by recent patent activity."
             return QueryResponse(
                 message="\n".join(response_lines),
                 chart=chart,
-                data={'sdg_distribution': sdg_data}
+                data={'sdg_distribution': sdg_data},
+                insight=insight,
+                takeaway=takeaway
             )
             
         except Exception as e:

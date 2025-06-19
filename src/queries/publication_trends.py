@@ -148,15 +148,21 @@ class PublicationTrendsHandler(BaseQueryHandler):
         
         total = sum(m['count'] for m in complete_months)
         response_lines.append(f"\n📅 **Total:** {total:,} patents")
-          # Generate chart
+        
+        # Generate chart
         labels = [f"{DateUtils.get_month_name(m['month'])} {m['year']}" for m in complete_months]
         values = [m['count'] for m in complete_months]
         chart = ChartGenerator.generate_line_chart(labels, values, title)
         
+        # Generate simple insight and takeaway
+        insight = "This chart shows the publication trend over the selected period."
+        takeaway = "Use this trend to identify periods of increased or decreased innovation activity."
         return QueryResponse(
             message="\n".join(response_lines),
             chart=chart,
-            data={'monthly_complete': complete_months}
+            data={'monthly_complete': complete_months},
+            insight=insight,
+            takeaway=takeaway
         )
     
     def _handle_relative_years(self, params: Dict[str, Any]) -> QueryResponse:
@@ -201,10 +207,15 @@ class PublicationTrendsHandler(BaseQueryHandler):
         values = [y['count'] for y in complete_years]
         chart = ChartGenerator.generate_line_chart(labels, values, title)
         
+        # Generate simple insight and takeaway
+        insight = "This chart shows the publication trend over the selected years."
+        takeaway = "Use this trend to identify long-term changes in patent activity."
         return QueryResponse(
             message="\n".join(response_lines),
             chart=chart,
-            data={'yearly_complete': complete_years}
+            data={'yearly_complete': complete_years},
+            insight=insight,
+            takeaway=takeaway
         )
     
     def _handle_specific_years(self, params: Dict[str, Any]) -> QueryResponse:

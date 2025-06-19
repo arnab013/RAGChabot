@@ -69,10 +69,15 @@ class TechnologyAnalysisHandler(BaseQueryHandler):
         else:
             chart = None
         
+        # Generate simple insight and takeaway
+        insight = "This chart shows the distribution of patents by technology category (IPC section)."
+        takeaway = "See which technology sectors are most active in recent patent filings."
         return QueryResponse(
             message="\n".join(response_lines),
             chart=chart,
-            data={'ipc_distribution': ipc_distribution}
+            data={'ipc_distribution': ipc_distribution},
+            insight=insight,
+            takeaway=takeaway
         )
     
     def _format_ipc_response(self, ipc_distribution: List[Dict]) -> List[str]:

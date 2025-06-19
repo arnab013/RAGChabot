@@ -112,19 +112,23 @@ class ChartGenerator:
 
 
 class QueryResponse:
-    """Standardized response format for all queries"""
+    """Standardized response format for all queries, always includes insight and takeaway."""
     
-    def __init__(self, message: str, chart: Optional[Dict] = None, data: Optional[Dict] = None):
+    def __init__(self, message: str, chart: Optional[Dict] = None, data: Optional[Dict] = None, insight: Optional[str] = "", takeaway: Optional[str] = ""):
         self.message = message
         self.chart = chart
         self.data = data
+        self.insight = insight or ""
+        self.takeaway = takeaway or ""
     
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary format"""
+        """Convert to dictionary format, always includes insight and takeaway."""
         return {
             'message': self.message,
             'chart': self.chart,
-            'data': self.data
+            'data': self.data,
+            'insight': self.insight,
+            'takeaway': self.takeaway
         }
 
 
