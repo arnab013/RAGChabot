@@ -44,11 +44,15 @@ class PublicationTrendsHandler(BaseQueryHandler):
                 return self._handle_relative_months(query, {'months_back': 12, 'title': 'Publication Trends (Last 12 Months)'})
                 
         except Exception as e:
-            error_message = self.generate_error_message(
-                query=query,
-                error_type="publication_trends_error",
-                technical_error=str(e)
-            )
+            try:
+                error_message = self.generate_error_message(
+                    query=query,
+                    error_type="publication_trends_error",
+                    technical_error=str(e)
+                )
+            except Exception:
+                # Fallback if error message generation fails
+                error_message = "I'm having trouble generating publication trends at the moment. Please try a different query or try again later."
             return QueryResponse(message=error_message)
     
     def _parse_query(self, query_lower: str) -> Dict[str, Any]:
@@ -141,32 +145,16 @@ class PublicationTrendsHandler(BaseQueryHandler):
             else:
                 current = current.replace(month=current.month + 1)
         
-        # Generate response with better formatting
-        response_lines = [
-            f"# {title}",
-            "",
-            f"## Monthly Patent Publications",
-            "",
-            f"Analysis covering **{months_back} months** from {DateUtils.get_month_name(complete_months[0]['month'])} {complete_months[0]['year']} to {DateUtils.get_month_name(complete_months[-1]['month'])} {complete_months[-1]['year']}:",
-            ""
-        ]
+        # Generate response
+        response_lines = [f"**{title}:**\n", "📈 **Patents by Month:**"]
         
-        # Add monthly breakdown
         for month_data in complete_months:
             year, month, count = month_data['year'], month_data['month'], month_data['count']
             month_name = DateUtils.get_month_name(month)
-            response_lines.append(f"• **{month_name} {year}:** {count:,} patents")
+            response_lines.append(f"  • {month_name} {year}: {count:,} patents")
         
         total = sum(m['count'] for m in complete_months)
-        avg_monthly = total / len(complete_months) if complete_months else 0
-        response_lines.extend([
-            "",
-            "## Summary Statistics",
-            f"• **Total Patents:** {total:,}",
-            f"• **Average per Month:** {avg_monthly:.1f} patents",
-            f"• **Peak Month:** {max(values)} patents",
-            f"• **Lowest Month:** {min(values)} patents"
-        ])
+        response_lines.append(f"\n📅 **Total:** {total:,} patents")
         
         # Generate chart
         labels = [f"{DateUtils.get_month_name(m['month'])} {m['year']}" for m in complete_months]
@@ -213,29 +201,14 @@ class PublicationTrendsHandler(BaseQueryHandler):
                 'count': data_dict.get(year, 0)
             })
         
-        # Generate response with better formatting
-        response_lines = [
-            f"# {title}",
-            "",
-            f"## Annual Patent Publications",
-            "",
-            f"Analysis covering **{years_back} years** from {start_year} to {current_year}:",
-            ""
-        ]
+        # Generate response
+        response_lines = [f"**{title}:**\n", "📈 **Patents by Year:**"]
         
         for year_data in complete_years:
-            response_lines.append(f"• **{year_data['year']}:** {year_data['count']:,} patents")
+            response_lines.append(f"  • {year_data['year']}: {year_data['count']:,} patents")
         
         total = sum(y['count'] for y in complete_years)
-        avg_yearly = total / len(complete_years) if complete_years else 0
-        response_lines.extend([
-            "",
-            "## Summary Statistics",
-            f"• **Total Patents:** {total:,}",
-            f"• **Average per Year:** {avg_yearly:.1f} patents",
-            f"• **Peak Year:** {max(values)} patents in {labels[values.index(max(values))]}",
-            f"• **Lowest Year:** {min(values)} patents in {labels[values.index(min(values))]}"
-        ])
+        response_lines.append(f"\n📅 **Total:** {total:,} patents")
         
         # Generate chart
         labels = [str(y['year']) for y in complete_years]
