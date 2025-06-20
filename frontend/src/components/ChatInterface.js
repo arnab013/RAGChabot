@@ -3,6 +3,8 @@ import { Send, Loader2, Menu, X, Search, BarChart3, MessageSquare, FileText, Dow
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
 import axios from 'axios';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 // Configure axios to send cookies with requests
 axios.defaults.withCredentials = true;
@@ -136,6 +138,7 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isThinking, setIsThinking] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [sessionInfo, setSessionInfo] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const messagesEndRef = useRef(null);
@@ -291,9 +294,9 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
       default: return <MessageSquare {...iconProps} />;
     }
   };
-    const downloadConversation = async () => {
+  const downloadConversation = async () => {
     try {
-      // Show loading indicator
+      setIsGeneratingPDF(true);
       console.log('Starting PDF generation...');
       
       // Check if messages exist
@@ -301,256 +304,112 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
         alert('No conversation to download.');
         return;
       }
+
+      // Find the messages container
+      let messagesContainer = document.querySelector('.max-w-4xl.mx-auto.space-y-6');
       
-      console.log('Preparing print view...');
-      
-      // Create a new window for printing
-      const printWindow = window.open('', '_blank');
-      
-      if (!printWindow) {
-        alert('Please allow popups for this site to enable PDF download.');
-        return;
-      }
-      
-      // Build the HTML content for printing
-      let printHTML = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <title>GoalDigger Conversation - ${new Date().toLocaleDateString()}</title>
-          <style>
-            @page {
-              margin: 20mm;
-              size: A4;
-            }
-            
-            body {
-              font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-              line-height: 1.6;
-              color: #333;
-              margin: 0;
-              padding: 0;
-              background: white;
-            }
-            
-            .header {
-              text-align: center;
-              margin-bottom: 30px;
-              padding-bottom: 20px;
-              border-bottom: 2px solid #e5e7eb;
-            }
-            
-            .header h1 {
-              font-size: 24px;
-              font-weight: bold;
-              margin: 0;
-              color: #0891b2;
-            }
-            
-            .header p {
-              font-size: 14px;
-              color: #6b7280;
-              margin: 10px 0 0 0;
-            }
-            
-            .message {
-              margin-bottom: 25px;
-              page-break-inside: avoid;
-            }
-            
-            .message-container {
-              display: flex;
-              align-items: flex-start;
-              gap: 15px;
-            }
-            
-            .message-container.user {
-              flex-direction: row-reverse;
-            }
-            
-            .avatar {
-              width: 32px;
-              height: 32px;
-              border-radius: 50%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-weight: bold;
-              font-size: 14px;
-              flex-shrink: 0;
-            }
-            
-            .avatar.user {
-              background: linear-gradient(135deg, #fbbf24, #f59e0b);
-              color: #1f2937;
-            }
-            
-            .avatar.ai {
-              background: linear-gradient(135deg, #0891b2, #0284c7);
-              color: white;
-            }
-            
-            .content-wrapper {
-              flex: 1;
-              max-width: calc(100% - 50px);
-            }
-            
-            .message-bubble {
-              padding: 15px 20px;
-              border-radius: 16px;
-              word-wrap: break-word;
-              line-height: 1.6;
-              font-size: 14px;
-              margin-bottom: 8px;
-            }
-            
-            .message-bubble.user {
-              background: #fef3c7;
-              border: 1px solid #fcd34d;
-              color: #1f2937;
-              max-width: 70%;
-              margin-left: auto;
-            }
-            
-            .message-bubble.ai {
-              background: #f0f9ff;
-              border: 1px solid #0891b2;
-              color: #1f2937;
-            }
-            
-            .timestamp {
-              font-size: 11px;
-              color: #6b7280;
-              text-align: right;
-            }
-            
-            .timestamp.ai {
-              text-align: left;
-            }
-            
-            .chart-container {
-              margin-top: 16px;
-              padding: 16px;
-              background: #f8fafc;
-              border-radius: 12px;
-              border: 1px solid #e2e8f0;
-              text-align: center;
-            }
-            
-            .chart-title {
-              font-weight: bold;
-              color: #0891b2;
-              margin-bottom: 8px;
-            }
-            
-            .chart-info {
-              font-size: 12px;
-              color: #6b7280;
-            }
-            
-            @media print {
-              body {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-              }
-              
-              .message {
-                page-break-inside: avoid;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>GoalDigger Conversation</h1>
-            <p>Patent & SDG Analytics - ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
-          </div>
-      `;
-      
-      // Process each message
-      messages.forEach((message, index) => {
-        if (index === 0 && message.content.includes('Hello there')) return; // Skip welcome message
-        
-        const isUser = message.sender === 'user';
-        
-        // Process message content
-        let content = '';
-        if (typeof message.content === 'string') {
-          content = message.content;
-        } else if (message.content && typeof message.content === 'object') {
-          if (message.content.text) {
-            content = message.content.text;
-          } else if (message.content.content && message.content.content.text) {
-            content = message.content.content.text;
-          } else {
-            content = JSON.stringify(message.content, null, 2);
-          }
+      if (!messagesContainer) {
+        console.log('Primary container not found, looking for messages...');
+        const messageElements = document.querySelectorAll('[data-message-id]');
+        if (messageElements.length === 0) {
+          throw new Error('No messages found to export');
         }
         
-        // Format content with line breaks and escape HTML
-        content = content.replace(/&/g, '&amp;')
-                        .replace(/</g, '&lt;')
-                        .replace(/>/g, '&gt;')
-                        .replace(/\n/g, '<br>');
-        
-        printHTML += `
-          <div class="message">
-            <div class="message-container ${isUser ? 'user' : ''}">
-              <div class="avatar ${isUser ? 'user' : 'ai'}">
-                ${isUser ? 'U' : 'AI'}
-              </div>
-              <div class="content-wrapper">
-                <div class="message-bubble ${isUser ? 'user' : 'ai'}">
-                  ${content}
-                </div>
-                <div class="timestamp ${isUser ? 'user' : 'ai'}">
-                  ${message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </div>
-              </div>
-            </div>
+        // Create a clean temporary container
+        messagesContainer = document.createElement('div');
+        messagesContainer.style.cssText = `
+          background: linear-gradient(to bottom right, #111827, #1f2937, #111827);
+          color: #ffffff;
+          font-family: system-ui, -apple-system, sans-serif;
+          padding: 40px;
+          width: 800px;
+          min-height: 600px;
+          position: absolute;
+          left: -10000px;
+          top: 0;
         `;
         
-        // Add chart if present
-        if (!isUser && message.chartData) {
-          printHTML += `
-            <div class="chart-container">
-              <div class="chart-title">📊 ${message.chartData.title || 'Chart'}</div>
-              <div class="chart-info">Chart data visualization (${message.chartData.type || 'chart'})</div>
-            </div>
-          `;
-        }
+        // Add header
+        const header = document.createElement('div');
+        header.innerHTML = `
+          <h1 style="color: #06b6d4; font-size: 28px; text-align: center; margin: 0 0 10px 0; font-weight: bold;">
+            GoalDigger Conversation
+          </h1>
+          <p style="color: #9ca3af; font-size: 14px; text-align: center; margin: 0 0 40px 0;">
+            Patent & SDG Analytics - ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}
+          </p>
+        `;
+        messagesContainer.appendChild(header);
         
-        printHTML += '</div>';
-      });
-      
-      printHTML += `
-        </body>
-        </html>
-      `;
-      
-      // Write content to the new window
-      printWindow.document.write(printHTML);
-      printWindow.document.close();
-      
-      // Wait for content to load, then trigger print
-      printWindow.onload = () => {
-        setTimeout(() => {
-          printWindow.print();
+        // Add each message with preserved styling
+        messageElements.forEach((messageEl) => {
+          const messageId = messageEl.getAttribute('data-message-id');
+          const message = messages.find(m => m.id === messageId);
           
-          // Close the window after printing (user can cancel this)
-          printWindow.onafterprint = () => {
-            printWindow.close();
-          };
-        }, 500);
-      };
+          // Skip welcome message
+          if (!message || (typeof message.content === 'string' && message.content.includes('Hello there'))) {
+            return;
+          }
+          
+          const messageClone = messageEl.cloneNode(true);
+          messageClone.style.marginBottom = '30px';
+          messagesContainer.appendChild(messageClone);
+        });
+        
+        document.body.appendChild(messagesContainer);
+      }
+
+      console.log('Capturing messages container...');
+
+      // Capture the entire container
+      const canvas = await html2canvas(messagesContainer, {
+        backgroundColor: '#1f2937',
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        removeContainer: false,
+        width: messagesContainer.scrollWidth,
+        height: messagesContainer.scrollHeight
+      });
+
+      // Clean up temporary container if we created one
+      if (messagesContainer.style.position === 'absolute') {
+        document.body.removeChild(messagesContainer);
+      }
+
+      console.log('Canvas captured, dimensions:', canvas.width, 'x', canvas.height);
+
+      if (canvas.width === 0 || canvas.height === 0) {
+        throw new Error('Canvas capture failed - no content rendered');
+      }
+
+      // Calculate PDF dimensions based on content with proper margins
+      const margin = 15; // 15mm margins on all sides
+      const imgWidth = 210 - (margin * 2); // A4 width minus left and right margins (180mm)
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
-      console.log('Print dialog opened');
+      // Create PDF with custom height to fit content plus margins
+      const pdfHeight = Math.max(297, imgHeight + (margin * 2)); // Minimum A4 height or content height + top/bottom margins
+      
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: [210, pdfHeight] // Custom format: A4 width, dynamic height
+      });
+
+      // Add the entire conversation as one image with proper margins
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+
+      // Save PDF
+      const fileName = `GoalDigger_Conversation_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+      
+      console.log('Single-page PDF generated successfully');
       
     } catch (error) {
       console.error('Error generating PDF:', error);
-      console.error('Error details:', error.message);
-      console.error('Error stack:', error.stack);
       
       const useTextFallback = window.confirm(
         `PDF generation failed: ${error.message}\n\nWould you like to download the conversation as a text file instead?`
@@ -559,6 +418,8 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
       if (useTextFallback) {
         downloadAsText();
       }
+    } finally {
+      setIsGeneratingPDF(false);
     }
   };
 
@@ -649,10 +510,15 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
             {messages.length > 1 && (
               <button
                 onClick={downloadConversation}
-                className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
-                title="Download conversation as PDF"
+                disabled={isGeneratingPDF}
+                className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title={isGeneratingPDF ? "Generating PDF..." : "Download conversation as PDF"}
               >
-                <Download size={20} />
+                {isGeneratingPDF ? (
+                  <Loader2 size={20} className="animate-spin" />
+                ) : (
+                  <Download size={20} />
+                )}
               </button>
             )}
             {messages.length > 1 && (

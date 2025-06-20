@@ -326,7 +326,7 @@ const MessageBubble = ({ message }) => {
     );
   };
   return (
-    <div className="w-full mb-6">
+    <div className="w-full mb-6" data-message-id={message.id}>
       {/* Message Row */}
       <div className={`flex items-start space-x-4 animate-slideIn ${isUser ? 'flex-row-reverse space-x-reverse' : ''}`}>
         {/* Avatar */}
