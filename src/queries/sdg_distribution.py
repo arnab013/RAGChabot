@@ -84,9 +84,8 @@ class SDGDistributionHandler(BaseQueryHandler):
         total_patents = sum(item['count'] for item in sdg_data)
         
         response_lines = [
-            "**SDG Distribution:**\n",
-            f"📊 **Total SDG-Classified Patents:** {total_patents:,}\n",
-            "📈 **Distribution by SDG:**"
+            "**SDG Distribution:**\n",            f"**Total SDG-Classified Patents:** {total_patents:,}\n",
+            "**Distribution by SDG:**"
         ]
         
         for item in sdg_data:

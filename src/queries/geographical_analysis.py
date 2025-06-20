@@ -110,9 +110,8 @@ Keep it concise (2-3 sentences) and avoid technical details.
         total_patents = sum(item['count'] for item in country_data)
         
         response_lines = [
-            f"**Top {limit} Countries by Applicant Origin:**\n",
-            f"📊 **Total Patents from Top Countries:** {total_patents:,}\n",
-            "🌍 **Geographical Distribution:**"
+            f"**Top {limit} Countries by Applicant Origin:**\n",            f"**Total Patents from Top Countries:** {total_patents:,}\n",
+            "**Geographical Distribution:**"
         ]
         
         for i, item in enumerate(country_data, 1):

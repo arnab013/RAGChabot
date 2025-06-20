@@ -236,7 +236,7 @@ class RAGPipeline:
         
         # Total patents query
         if any(phrase in query_lower for phrase in ["how many patents", "total patents", "number of patents", "database size"]):
-            response = f"📊 **Database Overview**\n\n"
+            response = f"**Database Overview**\n\n"
             response += f"I currently have access to **{stats['total_patents']:,} patents** in my database.\n\n"
             
             if stats.get('date_range'):
@@ -255,7 +255,7 @@ class RAGPipeline:
             if overview_items:
                 response += "**Quick Overview:**\n" + "\n".join([f"• {item}" for item in overview_items]) + "\n\n"
             
-            response += "💡 *Ask me about specific categories like 'patents by country', 'patents by year', or 'technology breakdown' for detailed analysis!*"
+            response += "*Ask me about specific categories like 'patents by country', 'patents by year', or 'technology breakdown' for detailed analysis!*"
             return response
         
         # Country-based queries
@@ -263,7 +263,7 @@ class RAGPipeline:
             if not stats.get('by_country'):
                 return "I apologize, but I don't have country information available in the current dataset. The available data columns are: " + ", ".join(stats.get('available_columns', []))
             
-            response = f"🌍 **Patents by Country**\n\n"
+            response = f"**Patents by Country**\n\n"
             response += f"**Total Countries Represented:** {len(stats['by_country'])}\n\n"
             
             for i, (country, count) in enumerate(list(stats['by_country'].items())[:10], 1):
@@ -280,7 +280,7 @@ class RAGPipeline:
             if not stats.get('by_year'):
                 return "I apologize, but I don't have publication date information available in the current dataset."
             
-            response = f"📅 **Patents by Year**\n\n"
+            response = f"**Patents by Year**\n\n"
             response += f"**Years Covered:** {stats['date_range']['earliest']} - {stats['date_range']['latest']}\n\n"
             
             # Show recent years
@@ -302,7 +302,7 @@ class RAGPipeline:
             if not stats.get('by_technology'):
                 return "I apologize, but I don't have enough technology classification data available. This might be because the patent titles/abstracts don't contain recognizable technology keywords."
             
-            response = f"🔬 **Patents by Technology Domain**\n\n"
+            response = f"**Patents by Technology Domain**\n\n"
             response += f"**Technology Areas Identified:** {len(stats['by_technology'])}\n\n"
             
             for i, (tech, count) in enumerate(list(stats['by_technology'].items())[:12], 1):

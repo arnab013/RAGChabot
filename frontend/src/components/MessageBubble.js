@@ -232,7 +232,7 @@ const MessageBubble = ({ message }) => {
     const takeaway = message.takeaway || contentData.takeaway || '';
     const { title, description, chart_data } = contentData;
     
-    // Log chart data to help with debugging
+    // Process chart data for rendering
     console.log('Chart text content data:', contentData);
     console.log('Message insight:', message.insight);
     console.log('Message takeaway:', message.takeaway);

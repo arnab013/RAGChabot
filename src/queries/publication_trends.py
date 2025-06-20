@@ -146,7 +146,7 @@ class PublicationTrendsHandler(BaseQueryHandler):
                 current = current.replace(month=current.month + 1)
         
         # Generate response
-        response_lines = [f"**{title}:**\n", "📈 **Patents by Month:**"]
+        response_lines = [f"**{title}:**\n", "**Patents by Month:**"]
         
         for month_data in complete_months:
             year, month, count = month_data['year'], month_data['month'], month_data['count']
@@ -154,7 +154,7 @@ class PublicationTrendsHandler(BaseQueryHandler):
             response_lines.append(f"  • {month_name} {year}: {count:,} patents")
         
         total = sum(m['count'] for m in complete_months)
-        response_lines.append(f"\n📅 **Total:** {total:,} patents")
+        response_lines.append(f"\n**Total:** {total:,} patents")
         
         # Generate chart
         labels = [f"{DateUtils.get_month_name(m['month'])} {m['year']}" for m in complete_months]
@@ -202,13 +202,13 @@ class PublicationTrendsHandler(BaseQueryHandler):
             })
         
         # Generate response
-        response_lines = [f"**{title}:**\n", "📈 **Patents by Year:**"]
+        response_lines = [f"**{title}:**\n", "**Patents by Year:**"]
         
         for year_data in complete_years:
             response_lines.append(f"  • {year_data['year']}: {year_data['count']:,} patents")
         
         total = sum(y['count'] for y in complete_years)
-        response_lines.append(f"\n📅 **Total:** {total:,} patents")
+        response_lines.append(f"\n**Total:** {total:,} patents")
         
         # Generate chart
         labels = [str(y['year']) for y in complete_years]
@@ -266,7 +266,7 @@ class PublicationTrendsHandler(BaseQueryHandler):
         for year_data in yearly_monthly:
             year = year_data['year']
             months = year_data['months']
-            response_lines.append(f"📈 **{year} Monthly Breakdown:**")
+            response_lines.append(f"**{year} Monthly Breakdown:**")
             
             for month_data in months:
                 month, count = month_data['month'], month_data['count']
@@ -331,7 +331,7 @@ class PublicationTrendsHandler(BaseQueryHandler):
         for year_data in yearly_monthly:
             year = year_data['year']
             months = year_data['months']
-            response_lines.append(f"📈 **{year} Monthly Breakdown:**")
+            response_lines.append(f"**{year} Monthly Breakdown:**")
             
             for month_data in months:
                 month, count = month_data['month'], month_data['count']

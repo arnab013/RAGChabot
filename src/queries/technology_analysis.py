@@ -90,9 +90,8 @@ class TechnologyAnalysisHandler(BaseQueryHandler):
         total_patents = sum(item['count'] for item in ipc_distribution)
         
         response_lines = [
-            "**IPC Classification Analysis:**\n",
-            f"📊 **Total Classified Patents:** {total_patents:,}\n",
-            "📈 **Distribution by IPC Section:**"
+            "**IPC Classification Analysis:**\n",            f"**Total Classified Patents:** {total_patents:,}\n",
+            "**Distribution by IPC Section:**"
         ]
         
         # IPC section descriptions

@@ -46,7 +46,7 @@ def build_index(df: pd.DataFrame,
     from config import LOCAL_MODEL_DIRECTORY
     
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    print(f"🔥 Using device: {device}")
+    print(f"Using device: {device}")
     
     # Try to use local model first, fallback to EMB_MODEL_NAME
     if os.path.exists(LOCAL_MODEL_DIRECTORY):

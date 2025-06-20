@@ -778,7 +778,7 @@ class PatentStatistics:
             
         except Exception as e:
             logger.error(f"Error getting SDG trends over time: {e}")
-            print(f"DEBUG: Exception in get_sdg_trends_over_time: {e}")
+            logger.error(f"Exception in get_sdg_trends_over_time: {e}")
             import traceback
             traceback.print_exc()
             return None

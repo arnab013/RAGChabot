@@ -206,7 +206,7 @@ class InventorAssigneeHandler(BaseQueryHandler):
         
         response_lines = [
             f"**Top {limit} Inventors Analysis:**\n",
-            f"📊 **Total Patents by Top Inventors:** {total_patents:,}\n",
+            f"**Total Patents by Top Inventors:** {total_patents:,}\n",
             "🧑‍💼 **Most Prolific Inventors:**"
         ]
         
@@ -223,7 +223,7 @@ class InventorAssigneeHandler(BaseQueryHandler):
         
         response_lines = [
             f"**Top {limit} Assignees Analysis:**\n",
-            f"📊 **Total Patents by Top Assignees:** {total_patents:,}\n",
+            f"**Total Patents by Top Assignees:** {total_patents:,}\n",
             "🏢 **Leading Organizations:**"
         ]
         

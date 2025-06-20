@@ -1,219 +1,289 @@
-# RAG Chatbot - Patent Search and Analysis System
+# Patent Research and Analysis Platform
 
-A production-ready RAG (Retrieval-Augmented Generation) chatbot system for patent search and analysis, featuring intelligent query classification, semantic search, and conversational AI capabilities.
+A comprehensive system for intelligent patent search and analysis, leveraging advanced natural language processing and retrieval-augmented generation (RAG) technologies to provide accurate, contextual information about patent data.
 
-## Features
+## Overview
 
-- **Intelligent Query Classification**: Automatically determines whether queries are conversational, patent search, or statistical requests
-- **Patent Search**: Semantic search through patent database with formatted results
-- **Conversational AI**: General chat capabilities with LLM integration
-- **Statistical Analysis**: Patent data analysis and visualization (extensible)
-- **Modern Web Interface**: React-based frontend with responsive design
-- **Structured API Responses**: JSON-formatted responses with multiple content types
+This platform combines modern AI capabilities with structured patent databases to deliver a professional-grade research tool. The system automatically classifies user queries, performs semantic searches across patent documents, and generates comprehensive responses with supporting data visualizations.
 
-## System Architecture
+## Key Features
 
-### Backend Components
-- **API Server** (`src/api.py`): Flask-based REST API with session management
-- **Query Classifier** (`src/query_classifier.py`): LLM-powered query type detection
-- **SQL Retriever** (`src/sql_retriever.py`): Database search with remote embedding API
-- **LLM Clients** (`src/llm_clients.py`): Google Gemini Flash 2.0 integration for response generation
-- **Statistics Engine** (`src/stats_queries.py`): Patent data analysis capabilities
+- **Advanced Query Processing**: Intelligent classification of natural language queries into appropriate response categories
+- **Semantic Patent Search**: Context-aware search capabilities across comprehensive patent databases
+- **Interactive Analytics**: Statistical analysis tools with dynamic data visualization
+- **Professional Web Interface**: Modern, responsive frontend built with React
+- **RESTful API**: Well-documented API endpoints for integration and extensibility
+- **Production Ready**: Scalable architecture with comprehensive error handling and logging
 
-### Frontend Components
-- **React Application** (`frontend/`): Modern web interface
-- **Chat Interface**: Real-time conversation with the AI
-- **Response Rendering**: Support for text, semantic, and chart response types
+## Technical Architecture
 
-## Quick Start
+### Core Components
 
-### Prerequisites
-- Python 3.8+
-- Node.js 14+
-- Google Gemini API key
-- Remote embedding API access
+**API Server** (`src/api.py`)
+- Flask-based REST API with session management
+- Request routing and response formatting
+- Authentication and security middleware
 
-### Installation
+**Query Classification Engine** (`src/query_classifier.py`)
+- Natural language understanding for query categorization
+- Machine learning-based intent detection
+- Context-aware query processing
 
-1. **Clone and Setup**
+**Semantic Search Module** (`src/sql_retriever.py`)
+- Vector-based document retrieval
+- Remote embedding API integration
+- Optimized search algorithms
+
+**Language Model Integration** (`src/llm_clients.py`)
+- Google Gemini API integration
+- Response generation and formatting
+- Model switching capabilities
+
+**Analytics Engine** (`src/stats_queries.py`)
+- Statistical analysis of patent data
+- Data aggregation and visualization
+- Trend analysis capabilities
+
+### Frontend Application
+
+**React Interface** (`frontend/`)
+- Component-based architecture
+- Real-time chat interface
+- Dynamic content rendering
+- Responsive design implementation
+
+## Installation and Setup
+
+### System Requirements
+
+- Python 3.8 or higher
+- Node.js 14.x or higher
+- Google Gemini API access
+- Remote embedding service access
+
+### Installation Steps
+
+1. **Repository Setup**
    ```bash
    git clone <repository-url>
    cd RAGChabot
    ```
 
-2. **Backend Setup**
+2. **Backend Dependencies**
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Environment Configuration**   Create `.env` file:   ```
+3. **Environment Configuration**
+   
+   Create a `.env` file in the project root:
+   ```bash
    GOOGLE_API_KEY=your_google_api_key
-   
-   # Model Configuration (Google only)
    GOOGLE_MODEL=gemini-2.0-flash
-   
    REMOTE_EMBEDDING_URL=https://api.confusedelectrons.xyz/embed-query-w-sentence-transformers/
    REMOTE_EMBEDDING_API_KEY=your_embedding_api_key
    BACKEND_PORT=5000
    FRONTEND_PORT=3000
    ```
 
-4. **Frontend Setup**
+4. **Frontend Dependencies**
    ```bash
    cd frontend
    npm install
    ```
 
+5. **Sample Data (Optional)**
+   
+   To generate fresh sample data for testing:
+   ```bash
+   python generate_sample_data.py
+   ```
+   
+   This creates `data/sample_patent_data.xlsx` with 100 fictional patent records for demonstration purposes.
+
 ### Running the Application
 
-1. **Start Backend Server (Production)**
+1. **Start Backend Server**
    ```bash
    python launch.py
    ```
-   Or manually:
+   
+   Alternative method:
    ```bash
    python run_api.py
    ```
-   Server will start on http://localhost:5000
+   
+   The server will be available at `http://localhost:5000`
 
 2. **Start Frontend Development Server**
    ```bash
    cd frontend
    npm start
    ```
-   Application will open at http://localhost:3000
+   
+   The application will open at `http://localhost:3000`
 
-## Model Configuration
+## Language Model Configuration
 
-The system uses Google Gemini models exclusively. You can easily switch between different Gemini models through environment variables:
+The system utilizes Google Gemini models for natural language processing and response generation. Model selection can be configured through environment variables.
 
-### Available Google Models
+### Supported Models
 
-- `gemini-2.0-flash-exp` - Latest experimental Flash model  
-- `gemini-2.0-flash` - Stable Flash model (Default)
-- `gemini-1.5-pro` - Production-ready pro model
-- `gemini-1.5-flash` - Fast, efficient model
-- `gemini-1.0-pro` - Stable pro model
+- `gemini-2.0-flash-exp` - Latest experimental model with enhanced capabilities
+- `gemini-2.0-flash` - Stable production model (recommended)
+- `gemini-1.5-pro` - High-performance model for complex queries
+- `gemini-1.5-flash` - Optimized for speed and efficiency
+- `gemini-1.0-pro` - Proven stable model
 
-### Switching Models
+### Model Configuration
 
-Simply update your `.env` file:
+Update the model selection in your `.env` file:
 ```bash
-# Switch to a different Google model
 GOOGLE_MODEL=gemini-1.5-pro
 ```
 
-Restart the application to apply changes.
+Restart the application to apply configuration changes.
 
-## API Endpoints
+## API Reference
 
-### Chat Endpoint
-**POST** `/api/chat`
+### Search Endpoint
 
-**Request:**
+**POST** `/api/search`
+
+Submit queries for patent search and analysis.
+
+**Request Format:**
 ```json
 {
-  "message": "Your query here"
+  "query": "Your search query or question"
 }
 ```
+
+**Response Format:**
+```json
+{
+  "message": "Response content",
+  "chart": null,
+  "error": "",
+  "insight": "",
+  "takeaway": ""
+}
+```
+
+### Conversation Management
+
+**POST** `/api/reset`
+
+Reset the current conversation session.
 
 **Response:**
 ```json
 {
-  "message": {
-    "type": "text|semantic_text|chart_text",
-    "content": {
-      "title": "Response Title",
-      "body": "Response content...",
-      "matched_chunks": [] // For semantic_text type
-    }
-  },
-  "session_id": "uuid",
-  "query_types": ["conversation"],
-  "classification": {
-    "detected_types": ["CONVERSATION"],
-    "confidence": 0.99,
-    "reasoning": "Classification explanation"
-  }
+  "message": "Conversation reset successfully"
 }
 ```
 
-### Other Endpoints
-- **GET** `/api/history` - Get conversation history
-- **GET** `/api/session-info` - Get session information
+## System Configuration
 
-## Configuration
+### Database Setup
 
-### Database
-The system uses SQLite with pre-embedded patent chunks. The database should be located at `data/patents.db`.
+The system requires a SQLite database containing pre-processed patent data with embedded vectors. A sample dataset is provided at `data/sample_patent_data.xlsx` for demonstration purposes.
 
-### Embedding Model
-Uses remote embedding API with sentence-transformers model for consistency with pre-embedded data.
+**Sample Data**: The repository includes a sample dataset with 100 fictional patent records to demonstrate the system functionality and data structure. This allows you to:
+- Test the application immediately
+- Understand the expected data format
+- Develop and validate new features
 
-### LLM Configuration
-Configured to use Mistral AI's open-mixtral-8x22b model for response generation.
+**Production Data**: For production use, replace the sample data with your actual patent dataset following the same structure and format.
+
+The database should include:
+- Patent metadata tables
+- Pre-computed embedding vectors
+- Indexed search capabilities
+
+### Embedding Service
+
+The system integrates with remote embedding services using sentence-transformer models. This ensures consistency with pre-embedded patent data and provides optimal search performance.
 
 ## Production Deployment
 
 ### Backend Deployment
-1. Use a production WSGI server (e.g., Gunicorn):
+
+1. **WSGI Server Configuration**
    ```bash
    pip install gunicorn
    gunicorn -w 4 -b 0.0.0.0:5000 src.api:app
    ```
 
-2. Set up reverse proxy (nginx recommended)
-3. Configure environment variables for production
-4. Enable logging and monitoring
+2. **Infrastructure Requirements**
+   - Reverse proxy configuration (nginx recommended)
+   - SSL/TLS certificate setup
+   - Environment variable management
+   - Logging and monitoring systems
 
 ### Frontend Deployment
-1. Build production bundle:
+
+1. **Production Build**
    ```bash
    cd frontend
    npm run build
    ```
 
-2. Serve static files with nginx or CDN
-3. Configure API proxy settings for production backend
+2. **Static Asset Serving**
+   - Configure web server (nginx/Apache)
+   - Set up CDN for static assets
+   - Configure API proxy settings
 
 ### Security Considerations
-- Use HTTPS in production
-- Implement rate limiting
-- Secure API keys and environment variables
-- Configure CORS appropriately
-- Regular security updates
 
-## Development
+- **HTTPS Implementation**: Mandatory for production environments
+- **Rate Limiting**: API endpoint protection against abuse
+- **Environment Security**: Secure management of API keys and sensitive data
+- **CORS Configuration**: Appropriate cross-origin resource sharing settings
+- **Regular Updates**: Maintain security patches and dependency updates
+
+## Development Guide
 
 ### Project Structure
+
 ```
 RAGChabot/
-├── src/                    # Backend source code
-│   ├── api.py             # Main Flask application
-│   ├── query_classifier.py # Query classification logic
-│   ├── sql_retriever.py   # Database search functionality
-│   ├── llm_clients.py     # LLM integration
-│   ├── config.py          # Configuration settings
-│   └── ...
-├── frontend/              # React frontend application
-│   ├── src/
-│   ├── public/
-│   └── package.json
-├── data/                  # Database and data files
-├── embeddings/           # Embedding models and indices
-├── requirements.txt      # Python dependencies
-└── README.md
+├── src/                     # Backend application code
+│   ├── api.py              # Main Flask application
+│   ├── query_classifier.py # Query processing logic
+│   ├── sql_retriever.py    # Database search functionality
+│   ├── llm_clients.py      # Language model integration
+│   ├── config.py           # Configuration management
+│   └── stats_queries.py    # Analytics and statistics
+├── frontend/               # React frontend application
+│   ├── src/               # React components and logic
+│   ├── public/            # Static assets
+│   └── package.json       # Frontend dependencies
+├── data/                  # Database files and datasets
+├── embeddings/            # Vector embeddings and indices
+├── database/              # Database models and configuration
+├── requirements.txt       # Python dependencies
+└── README.md             # Documentation
 ```
 
-### Adding New Features
-1. **Query Types**: Extend `query_classifier.py` for new query classifications
-2. **Response Types**: Add new response formatters in `api.py`
-3. **Frontend Components**: Create new React components for response rendering
+### Extension and Customization
+
+**Adding Query Types**
+Extend the `query_classifier.py` module to support additional query classifications and response patterns.
+
+**Response Formatting**
+Modify response handlers in `api.py` to support new data formats and visualization types.
+
+**Frontend Components**
+Develop new React components in the `frontend/src` directory for enhanced user interface features.
+
+**Analytics Capabilities**
+Extend the `stats_queries.py` module to include additional statistical analysis and reporting features.
+
+## Technical Support
+
+For technical issues, feature requests, or development questions, please refer to the project documentation or contact the development team.
 
 ## License
 
-[Add your license information here]
-
-## Support
-
-[Add support/contact information here]
+This project is licensed under the terms specified in the LICENSE file. Please review the license agreement before using or modifying the software.

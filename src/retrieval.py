@@ -79,7 +79,7 @@ class PassageRetriever:
         # 3) init encoder for on-the-fly queries
         import torch
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        print(f"🔥 PassageRetriever using device: {device}")
+        print(f"PassageRetriever using device: {device}")
         self.model = SentenceTransformer(EMB_MODEL_NAME, device=device)
 
 

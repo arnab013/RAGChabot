@@ -20,4 +20,4 @@ from src.config import BACKEND_PORT
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', BACKEND_PORT))
     print(f"🚀 Starting API server on port {port}")
-    api_module.app.run(host='0.0.0.0', port=port, debug=True)
+    api_module.app.run(host='0.0.0.0', port=port, debug=False)
