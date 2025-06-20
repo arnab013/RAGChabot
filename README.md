@@ -65,7 +65,7 @@ This platform combines modern AI capabilities with structured patent databases t
 
 1. **Repository Setup**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/arnab013/RAGChabot.git
    cd RAGChabot
    ```
 
@@ -76,15 +76,24 @@ This platform combines modern AI capabilities with structured patent databases t
 
 3. **Environment Configuration**
    
-   Create a `.env` file in the project root:
+   Copy `.env.example` to `.env` and configure your API keys:
    ```bash
-   GOOGLE_API_KEY=your_google_api_key
+   cp .env.example .env
+   ```
+   
+   Then edit `.env` and add your API keys:
+   ```bash
+   GOOGLE_API_KEY=your_google_gemini_api_key_here
    GOOGLE_MODEL=gemini-2.0-flash
    REMOTE_EMBEDDING_URL=https://api.confusedelectrons.xyz/embed-query-w-sentence-transformers/
-   REMOTE_EMBEDDING_API_KEY=your_embedding_api_key
+   REMOTE_EMBEDDING_API_KEY=your_embedding_api_key_here
    BACKEND_PORT=5000
    FRONTEND_PORT=3000
    ```
+   
+   **Get API Keys:**
+   - Google Gemini API: https://makersuite.google.com/app/apikey
+   - Embedding API: Contact your embedding service provider
 
 4. **Frontend Dependencies**
    ```bash
