@@ -147,6 +147,20 @@ frontend/build/
 
 # Frontend test files
 frontend/src/Test*.js
+frontend/test-*.html
+frontend/temp_*.js
+
+# Backup and old files
+*_backup.*
+*.backup
+*.OLD
+*.BACKUP
+*_old.*
+
+# Test directories and files
+frontend/src/test/
+test-*.html
+temp_*.js
 
 # Temporary and backup files
 *.tmp
