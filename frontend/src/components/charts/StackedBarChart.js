@@ -11,7 +11,7 @@ import {
   getAxisLabels
 } from './chartUtils';
 
-const StackedBarChart = ({ chartData, height = 600, maxDataPoints = 25 }) => {
+const StackedBarChart = ({ chartData, height = 360, maxDataPoints = 25 }) => {
   // Transform and prepare data
   const transformedData = transformChartData(chartData.data);
   const limitedData = limitDataPoints(transformedData, maxDataPoints);

@@ -11,7 +11,7 @@ import {
   CustomTooltip
 } from './chartUtils';
 
-const HorizontalBarChart = ({ chartData, height = 600, maxDataPoints = 20 }) => {
+const HorizontalBarChart = ({ chartData, height = 360, maxDataPoints = 20 }) => {
   console.log('🔍 HorizontalBarChart - Input chartData:', JSON.stringify(chartData, null, 2));
   
   // Transform and prepare data

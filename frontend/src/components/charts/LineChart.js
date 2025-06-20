@@ -12,7 +12,7 @@ import {
   getAxisLabels
 } from './chartUtils';
 
-const LineChart = ({ chartData, height = 600, maxDataPoints = 50 }) => {
+const LineChart = ({ chartData, height = 360, maxDataPoints = 50 }) => {
   // Transform and prepare data
   const transformedData = transformChartData(chartData.data);
   const limitedData = limitDataPoints(transformedData, maxDataPoints);

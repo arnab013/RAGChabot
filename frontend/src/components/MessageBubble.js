@@ -380,37 +380,9 @@ const MessageBubble = ({ message }) => {
           {/* Spacer for avatar alignment */}
           <div className="w-10 h-10 flex-shrink-0"></div>
           
-          {/* Chart Container - matching message width */}
+          {/* Chart Container */}
           <div className="w-full max-w-full">
-            <div className="bg-gradient-to-br from-gray-800/30 to-gray-900/30 backdrop-blur-sm rounded-2xl shadow-2xl border border-cyan-400/10 p-1 hover:border-cyan-400/20 transition-all duration-300 w-full">
-              <div className="bg-gradient-to-r from-gray-800/80 to-gray-900/80 rounded-xl p-6 border border-gray-700/50">
-                {/* Chart Header */}
-                <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-600/30">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-400/25">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h4 className="text-white font-semibold text-base">Data Visualization</h4>
-                      <p className="text-gray-400 text-sm">Interactive Chart Analysis</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <span className="px-4 py-1.5 bg-gradient-to-r from-cyan-400/20 to-blue-500/20 text-cyan-300 text-sm rounded-full border border-cyan-400/30 font-medium">
-                      {chartData.type?.toUpperCase() || 'CHART'}
-                    </span>
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
-                  </div>
-                </div>
-                
-                {/* Chart Content */}
-                <div className="relative bg-gradient-to-br from-gray-900/20 to-gray-800/20 rounded-xl p-2 border border-gray-700/30">
-                  <ChartFactory chartData={chartData} />
-                </div>
-              </div>
-            </div>
+            <ChartFactory chartData={chartData} />
           </div>
         </div>
       )}

@@ -9,7 +9,7 @@ import {
   CHART_THEME
 } from './chartUtils';
 
-const PieChart = ({ chartData, height = 600, maxDataPoints = 15 }) => {
+const PieChart = ({ chartData, height = 480, maxDataPoints = 15 }) => {
   // Transform and prepare data
   const transformedData = transformChartData(chartData.data);
   const limitedData = limitDataPoints(transformedData, maxDataPoints);

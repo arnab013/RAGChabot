@@ -12,7 +12,7 @@ import {
   getAxisLabels
 } from './chartUtils';
 
-const BarChart = ({ chartData, height = 600, maxDataPoints = 20 }) => {
+const BarChart = ({ chartData, height = 360, maxDataPoints = 20 }) => {
   // Transform and prepare data
   const transformedData = transformChartData(chartData.data);
   const limitedData = limitDataPoints(transformedData, maxDataPoints);
