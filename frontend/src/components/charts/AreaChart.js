@@ -22,8 +22,8 @@ const AreaChart = ({ chartData, height = 600, maxDataPoints = 50 }) => {
   // Get dynamic axis labels
   const { xAxisLabel, yAxisLabel } = getAxisLabels(chartData, limitedData);
   
-  // Chart configuration
-  const margin = { top: 30, right: 40, left: 80, bottom: 100 };
+  // Chart configuration - symmetric margins
+  const margin = { top: 5, right: 20, left: 20, bottom: 5 };
   
   return (
     <ChartBase 
@@ -42,11 +42,11 @@ const AreaChart = ({ chartData, height = 600, maxDataPoints = 50 }) => {
           {...CHART_THEME.axis}
           angle={-45}
           textAnchor="end"
-          height={100}
+          height={60}
         >
           <Label 
             value={xAxisLabel} 
-            offset={-5} 
+            offset={0} 
             position="insideBottom"
             {...CHART_THEME.label}
           />

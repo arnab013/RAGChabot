@@ -30,8 +30,8 @@ const HorizontalBarChart = ({ chartData, height = 600, maxDataPoints = 20 }) => 
   ));
   console.log('🔍 HorizontalBarChart - Max value:', maxValue);
   
-  // Chart configuration for horizontal layout
-  const margin = { top: 20, right: 30, left: 100, bottom: 50 };
+  // Chart configuration for horizontal layout - symmetric margins
+  const margin = { top: 5, right: 20, left: 20, bottom: 5 };
     return (
     <ChartBase 
       title={chartData.title} 

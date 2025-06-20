@@ -21,8 +21,8 @@ const BarChart = ({ chartData, height = 600, maxDataPoints = 20 }) => {
     // Get dynamic axis labels
   const { xAxisLabel, yAxisLabel } = getAxisLabels(chartData, limitedData);
   
-  // Chart configuration
-  const margin = { top: 20, right: 30, left: 60, bottom: 80 };
+  // Chart configuration - symmetric margins
+  const margin = { top: 5, right: 20, left: 20, bottom: 5 };
   
   return (
     <ChartBase 
@@ -41,11 +41,11 @@ const BarChart = ({ chartData, height = 600, maxDataPoints = 20 }) => {
           {...CHART_THEME.axis}
           angle={-45}
           textAnchor="end"
-          height={100}
+          height={60}
         >
           <Label 
             value={xAxisLabel} 
-            offset={-5} 
+            offset={0} 
             position="insideBottom"
             {...CHART_THEME.label}
           />

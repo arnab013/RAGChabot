@@ -620,45 +620,8 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
       {/* Main Chat Container */}
       <div className="flex h-screen max-w-6xl w-full bg-gray-800/30 backdrop-blur-lg rounded-3xl border border-gray-700/50 shadow-2xl overflow-hidden relative">
         
-        {/* Sidebar with Example Prompts */}
-        <div className={`w-80 bg-gray-800/50 backdrop-blur-sm border-r border-gray-700/50 transform transition-transform duration-300 ease-in-out ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full absolute'
-        }`}>
-          <div className="flex items-center justify-between p-4 border-b border-gray-700">
-            <h2 className="text-lg font-semibold text-white">Example Prompts</h2>
-            <button
-              onClick={toggleSidebar}
-              className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              <X size={20} />
-            </button>
-          </div>
-          
-          <div className="p-4 h-full overflow-y-auto pb-20">
-            {examplePrompts.map((category, categoryIndex) => (
-              <div key={categoryIndex} className="mb-6">
-                <div className="flex items-center space-x-2 mb-3">
-                  {getIcon(category.icon)}
-                  <h3 className="text-sm font-medium text-gray-300">{category.category}</h3>
-                </div>
-                <div className="space-y-2">
-                  {category.prompts.map((prompt, promptIndex) => (
-                    <button
-                      key={promptIndex}
-                      onClick={() => handlePromptSelect(prompt)}
-                      className="w-full text-left p-3 text-sm text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors border border-gray-600 hover:border-gray-500"
-                    >
-                      {prompt}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Main Chat Area */}
-        <div className="flex flex-col flex-1">
+        {/* Main Chat Area - Full Width */}
+        <div className="flex flex-col flex-1 w-full">
           {/* Header */}
           <div className="flex-shrink-0 bg-gray-800/90 backdrop-blur-sm border-b border-gray-700/50 px-6 py-4">
           <div className="flex items-center justify-between">
@@ -669,9 +632,10 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
                   alt="GoalDigger" 
                   className="w-6 h-6 rounded-full"
                 />
-              </div>            <div>
-                <h1 className="text-xl font-semibold text-white">GoalDigger</h1>              <p className="text-sm text-gray-300">
-                  {isThinking ? 'Thinking...' : `Online${sessionInfo ? ` • ${sessionInfo.message_count} messages` : ''}`}
+              </div>              <div>
+                <h1 className="text-xl font-semibold text-white">GoalDigger</h1>
+                <p className="text-sm text-gray-300">
+                  {isThinking ? 'Thinking...' : 'Online'}
                 </p>
               </div>
             </div>            {/* Session controls */}          <div className="flex items-center space-x-2">
@@ -691,7 +655,7 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
                 <Download size={20} />
               </button>
             )}
-            {sessionInfo && sessionInfo.message_count > 0 && (
+            {messages.length > 1 && (
               <button
                 onClick={clearSession}
                 className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
@@ -700,7 +664,8 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-              </button>            )}
+              </button>
+            )}
           </div></div>
         </div>
 
@@ -758,6 +723,51 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
                 Press Enter to send • Shift + Enter for new line
               </p>
             </div>
+          </div>
+        </div>
+        
+        {/* Backdrop Overlay */}
+        {isSidebarOpen && (
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300"
+            onClick={toggleSidebar}
+          />
+        )}
+        
+        {/* Sidebar Overlay with Example Prompts */}
+        <div className={`absolute top-0 left-0 w-80 h-full bg-gray-800/95 backdrop-blur-sm border-r border-gray-700/50 transform transition-transform duration-300 ease-in-out z-50 ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}>
+          <div className="flex items-center justify-between p-4 border-b border-gray-700">
+            <h2 className="text-lg font-semibold text-white">Example Prompts</h2>
+            <button
+              onClick={toggleSidebar}
+              className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          
+          <div className="p-4 h-full overflow-y-auto pb-20">
+            {examplePrompts.map((category, categoryIndex) => (
+              <div key={categoryIndex} className="mb-6">
+                <div className="flex items-center space-x-2 mb-3">
+                  {getIcon(category.icon)}
+                  <h3 className="text-sm font-medium text-gray-300">{category.category}</h3>
+                </div>
+                <div className="space-y-2">
+                  {category.prompts.map((prompt, promptIndex) => (
+                    <button
+                      key={promptIndex}
+                      onClick={() => handlePromptSelect(prompt)}
+                      className="w-full text-left p-3 text-sm text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors border border-gray-600 hover:border-gray-500"
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
         

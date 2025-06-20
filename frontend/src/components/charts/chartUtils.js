@@ -57,7 +57,12 @@ export const CHART_THEME = {
     style: { fill: '#d1d5db', fontSize: '12px' }
   },
   legend: {
-    wrapperStyle: { color: '#d1d5db' }
+    verticalAlign: 'top',
+    height: 36,
+    wrapperStyle: { 
+      color: '#d1d5db',
+      paddingBottom: '20px'
+    }
   }
 };
 

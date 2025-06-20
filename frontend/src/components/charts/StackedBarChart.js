@@ -21,8 +21,8 @@ const StackedBarChart = ({ chartData, height = 600, maxDataPoints = 25 }) => {
   // Get dynamic axis labels
   const { xAxisLabel, yAxisLabel } = getAxisLabels(chartData, limitedData);
   
-  // Chart configuration
-  const margin = { top: 30, right: 40, left: 80, bottom: 100 };
+  // Chart configuration - symmetric margins
+  const margin = { top: 5, right: 20, left: 20, bottom: 5 };
   
   // Enhanced tooltip for stacked bars
   const StackedTooltip = ({ active, payload, label }) => {
@@ -82,11 +82,11 @@ const StackedBarChart = ({ chartData, height = 600, maxDataPoints = 25 }) => {
           {...CHART_THEME.axis}
           angle={-45}
           textAnchor="end"
-          height={100}
+          height={60}
         >
           <Label 
             value={xAxisLabel} 
-            offset={-5} 
+            offset={0} 
             position="insideBottom"
             {...CHART_THEME.label}
           />
