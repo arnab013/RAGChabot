@@ -616,14 +616,14 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
       };
 
   return (
-    <div className="flex justify-center items-start min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
-      {/* Main Chat Container */}
-      <div className="flex h-screen max-w-6xl w-full bg-gray-800/30 backdrop-blur-lg rounded-3xl border border-gray-700/50 shadow-2xl overflow-hidden relative">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-2">
+      {/* Main Chat Container - Centered with proper sizing */}
+      <div className="flex h-[calc(100vh-1rem)] w-full max-w-5xl bg-gray-800/30 backdrop-blur-lg border border-gray-700/50 rounded-xl shadow-2xl overflow-hidden relative">
         
         {/* Main Chat Area - Full Width */}
         <div className="flex flex-col flex-1 w-full">
           {/* Header */}
-          <div className="flex-shrink-0 bg-gray-800/90 backdrop-blur-sm border-b border-gray-700/50 px-6 py-4">
+          <div className="flex-shrink-0 bg-gray-800/90 backdrop-blur-sm border-b border-gray-700/50 px-9 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
@@ -670,8 +670,8 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
         </div>
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto px-6 py-6">
-            <div className="max-w-3xl mx-auto space-y-6">
+          <div className="flex-1 overflow-y-auto px-9 py-6">
+            <div className="max-w-4xl mx-auto space-y-6">
               {messages.map((message) => (
                 <MessageBubble key={message.id} message={message} />
               ))}
@@ -682,8 +682,8 @@ const ChatInterface = () => {  const [messages, setMessages] = useState([
           </div>
 
           {/* Input Area */}
-          <div className="flex-shrink-0 bg-gray-800/90 backdrop-blur-sm border-t border-gray-700/50 px-6 py-4">
-            <div className="flex items-end space-x-4 max-w-3xl mx-auto">
+          <div className="flex-shrink-0 bg-gray-800/90 backdrop-blur-sm border-t border-gray-700/50 px-9 py-4">
+            <div className="flex items-end space-x-4 max-w-4xl mx-auto">
               <div className="flex-1 relative chat-input-container">
                 <textarea
                   ref={inputRef}
