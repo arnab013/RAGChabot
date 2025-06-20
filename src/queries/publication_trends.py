@@ -39,9 +39,11 @@ class PublicationTrendsHandler(BaseQueryHandler):
                 return self._handle_specific_years(query, query_params)
             elif query_params['type'] == 'comparison_years':
                 return self._handle_comparison_years(query, query_params)
+            elif query_params['type'] == 'all_years':
+                return self._handle_all_years(query, query_params)
             else:
-                # Default to last 12 months
-                return self._handle_relative_months(query, {'months_back': 12, 'title': 'Publication Trends (Last 12 Months)'})
+                # Default to all years
+                return self._handle_all_years(query, {'title': 'Publication Trends (All Available Data)'})
                 
         except Exception as e:
             try:
@@ -57,17 +59,74 @@ class PublicationTrendsHandler(BaseQueryHandler):
     
     def _parse_query(self, query_lower: str) -> Dict[str, Any]:
         """Parse query to extract parameters"""
-        params = {'type': 'relative_months', 'title': 'Publication Trends'}
+        params = {'type': 'all_years', 'title': 'Publication Trends'}  # Changed default to all years
         
-        # Pattern matching
+        # Enhanced pattern matching
         month_match = re.search(r'(?:last|past|recent)\s+(\d+)\s+months?', query_lower)
         year_match = re.search(r'(?:last|past|recent)\s+(\d+)\s+years?', query_lower)
+        # New: flexible year pattern that doesn't require "last/past/recent"
+        flexible_year_match = re.search(r'(?:by\s+)?(\d+)\s+years?(?:\s+(?:period|span|range))?', query_lower)
         year_specific = re.findall(r'(?:in|for|during)\s+(\d{4})', query_lower)
         year_mentions = re.findall(r'\b(20\d{2})\b', query_lower)
         comparison_keywords = ['compar', 'vs', 'versus', 'against', 'and']
         
-        # Determine query type
-        if year_specific:
+        # NEW: Monthly pattern detection
+        monthly_patterns = [
+            r'\bby\s+months?\b',
+            r'\bmonthly\b',
+            r'\bper\s+month\b',
+            r'\bmonth\s+by\s+month\b'
+        ]
+        
+        # NEW: Monthly in specific year pattern
+        monthly_in_year = re.search(r'(?:by\s+)?months?\s+(?:in|for|during)\s+(\d{4})', query_lower)
+        monthly_for_year = re.search(r'monthly.*?(?:in|for|during)\s+(\d{4})', query_lower)
+        
+        # NEW: Monthly in last year pattern
+        monthly_last_year = re.search(r'(?:by\s+)?months?\s+(?:in\s+)?(?:last|past|recent)\s+year', query_lower)
+        
+        # Check for explicit "by year" pattern - this should show yearly aggregation
+        by_year_pattern = re.search(r'\bby\s+year\b', query_lower)
+        
+        # Check for patterns that suggest all-time view
+        all_time_patterns = re.search(r'\b(?:all|total|entire|complete|full|overall)\s+(?:time|period|range|data|years?|history)\b', query_lower)
+        
+        # Check if any monthly pattern is present
+        is_monthly_query = any(re.search(pattern, query_lower) for pattern in monthly_patterns) or monthly_in_year or monthly_for_year or monthly_last_year
+        
+        # Determine query type based on patterns - ENHANCED ORDER OF PRECEDENCE
+        if monthly_last_year:
+            # "by months in last year" - show last 12 months
+            params['type'] = 'relative_months'
+            params['months'] = 12
+            params['title'] = "Publication Trends (Last 12 Months)"
+            
+        elif monthly_in_year or monthly_for_year:
+            # "by month in 2023" - show monthly data for specific year
+            year_match = monthly_in_year or monthly_for_year
+            year = int(year_match.group(1))
+            params['type'] = 'specific_years'
+            params['years'] = [year]
+            params['title'] = f"Monthly Publication Trends for {year}"
+            
+        elif is_monthly_query and year_specific:
+            # Monthly query with specific year mentioned
+            params['type'] = 'specific_years'
+            params['years'] = [int(year) for year in year_specific]
+            params['title'] = f"Monthly Publication Trends for {', '.join(year_specific)}"
+            
+        elif is_monthly_query and len(year_mentions) == 1:
+            # Monthly query with year mentioned in text
+            params['type'] = 'specific_years'
+            params['years'] = [int(year_mentions[0])]
+            params['title'] = f"Monthly Publication Trends for {year_mentions[0]}"
+        
+        elif by_year_pattern and not flexible_year_match:
+            # User explicitly wants yearly breakdown for all available data
+            params['type'] = 'all_years'
+            params['title'] = "Publication Trends by Year (All Available Data)"
+        
+        elif year_specific:
             params['type'] = 'specific_years'
             params['years'] = [int(year) for year in year_specific]
             params['title'] = f"Publication Trends for {', '.join(year_specific)}"
@@ -91,6 +150,23 @@ class PublicationTrendsHandler(BaseQueryHandler):
             params['type'] = 'relative_years'
             params['years_back'] = int(year_match.group(1))
             params['title'] = f"Publication Trends (Last {params['years_back']} Years)"
+        
+        elif flexible_year_match:
+            # Handle patterns like "by 20 year" or "20 years"
+            params['type'] = 'relative_years'
+            params['years_back'] = int(flexible_year_match.group(1))
+            params['title'] = f"Publication Trends (Last {params['years_back']} Years)"
+        
+        elif all_time_patterns:
+            # Explicitly requested all-time view
+            params['type'] = 'all_years'
+            params['title'] = "Publication Trends (All Available Data)"
+        
+        # Default case: if no specific time pattern detected, show all available years
+        # This fixes the issue where generic queries defaulted to 12 months
+        elif 'trend' in query_lower or 'publication' in query_lower:
+            params['type'] = 'all_years'
+            params['title'] = "Publication Trends (All Available Data)"
         
         return params
     
@@ -116,6 +192,7 @@ class PublicationTrendsHandler(BaseQueryHandler):
             extract('month', Patent.publication_date).label('month'),
             func.count(Patent.publication_number).label('count')
         ).filter(
+            Patent.publication_date.isnot(None),
             Patent.publication_date >= start_date
         ).group_by(
             extract('year', Patent.publication_date),
@@ -123,7 +200,7 @@ class PublicationTrendsHandler(BaseQueryHandler):
         ).order_by('year', 'month').all()
         
         # Create lookup dict
-        data_dict = {(int(year), int(month)): count for year, month, count in monthly_stats}
+        data_dict = {(int(year), int(month)): count for year, month, count in monthly_stats if year is not None and month is not None}
         
         # Generate complete month series
         complete_months = []
@@ -186,13 +263,14 @@ class PublicationTrendsHandler(BaseQueryHandler):
             extract('year', Patent.publication_date).label('year'),
             func.count(Patent.publication_number).label('count')
         ).filter(
+            Patent.publication_date.isnot(None),
             extract('year', Patent.publication_date) >= start_year
         ).group_by(
             extract('year', Patent.publication_date)
         ).order_by('year').all()
         
         # Create lookup dict and complete series
-        data_dict = {int(year): count for year, count in yearly_stats}
+        data_dict = {int(year): count for year, count in yearly_stats if year is not None}
         complete_years = []
         
         for year in range(start_year, current_year + 1):
@@ -240,13 +318,14 @@ class PublicationTrendsHandler(BaseQueryHandler):
                 extract('month', Patent.publication_date).label('month'),
                 func.count(Patent.publication_number).label('count')
             ).filter(
+                Patent.publication_date.isnot(None),
                 extract('year', Patent.publication_date) == year
             ).group_by(
                 extract('month', Patent.publication_date)
             ).order_by('month').all()
             
             # Create complete 12-month series
-            data_dict = {int(month): count for month, count in monthly_stats}
+            data_dict = {int(month): count for month, count in monthly_stats if month is not None}
             months = []
             
             for month in range(1, 13):
@@ -306,12 +385,13 @@ class PublicationTrendsHandler(BaseQueryHandler):
                 extract('month', Patent.publication_date).label('month'),
                 func.count(Patent.publication_number).label('count')
             ).filter(
+                Patent.publication_date.isnot(None),
                 extract('year', Patent.publication_date) == year
             ).group_by(
                 extract('month', Patent.publication_date)
             ).order_by('month').all()
             
-            data_dict = {int(month): count for month, count in monthly_stats}
+            data_dict = {int(month): count for month, count in monthly_stats if month is not None}
             months = []
             
             for month in range(1, 13):
@@ -365,3 +445,63 @@ class PublicationTrendsHandler(BaseQueryHandler):
             })
         
         return ChartGenerator.generate_comparison_chart(labels, datasets, title)
+
+    def _handle_all_years(self, query: str, params: Dict[str, Any]) -> QueryResponse:
+        """Handle all years queries like 'by year' or generic 'publication trends'"""
+        title = params.get('title', 'Publication Trends (All Available Data)')
+        
+        # Get all years with data from database
+        yearly_stats = self.session.query(
+            extract('year', Patent.publication_date).label('year'),
+            func.count(Patent.publication_number).label('count')
+        ).filter(
+            Patent.publication_date.isnot(None)
+        ).group_by(
+            extract('year', Patent.publication_date)
+        ).order_by('year').all()
+        
+        # Convert to list of dicts
+        yearly_data = []
+        for year, count in yearly_stats:
+            if year is not None:  # Extra safety check
+                yearly_data.append({
+                    'year': int(year),
+                    'count': count
+                })
+        
+        if not yearly_data:
+            return QueryResponse(
+                message="No publication data found in the database.",
+                chart=None,
+                data={'yearly_data': []}
+            )
+        
+        # Generate response
+        response_lines = [f"**{title}:**\n", "**Patents by Year:**"]
+        
+        for year_data in yearly_data:
+            response_lines.append(f"  • {year_data['year']}: {year_data['count']:,} patents")
+        
+        total = sum(y['count'] for y in yearly_data)
+        response_lines.append(f"\n**Total:** {total:,} patents")
+        response_lines.append(f"**Years Covered:** {yearly_data[0]['year']} - {yearly_data[-1]['year']}")
+        
+        # Generate chart
+        labels = [str(y['year']) for y in yearly_data]
+        values = [y['count'] for y in yearly_data]
+        chart = ChartGenerator.generate_line_chart(labels, values, title)
+        
+        # Generate dynamic insights using LLM
+        year_range = f"{yearly_data[0]['year']}-{yearly_data[-1]['year']}"
+        peak_year = yearly_data[values.index(max(values))]['year'] if values else "N/A"
+        low_year = yearly_data[values.index(min(values))]['year'] if values else "N/A"
+        data_summary = f"Patent publications from {year_range}. Total: {total:,} patents across {len(yearly_data)} years. Peak: {max(values) if values else 0} patents in {peak_year}, Low: {min(values) if values else 0} patents in {low_year}."
+        insights = self.generate_dynamic_insights(query, chart, data_summary)
+        
+        return QueryResponse(
+            message="\n".join(response_lines),
+            chart=chart,
+            data={'yearly_data': yearly_data},
+            insight=insights["insight"],
+            takeaway=insights["takeaway"]
+        )

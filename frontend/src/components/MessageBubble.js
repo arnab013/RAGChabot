@@ -1,5 +1,7 @@
 import React from 'react';
 import { User } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkBreaks from 'remark-breaks';
 import ChartFactory from './charts/ChartFactory';
 
 const MessageBubble = ({ message }) => {
@@ -161,44 +163,55 @@ const MessageBubble = ({ message }) => {
   const formatTextContent = (text) => {
     if (!text) return <div></div>;
     
-    return text.split('\n').map((line, i) => {
-      // Handle different formatting styles
-      if (line.trim() === '') {
-        return <br key={i} />;
-      }
+    // Pre-process text to add line breaks if missing
+    let processedText = text;
+    
+    // If the text has very few line breaks, add them manually
+    if (text.length > 500 && text.split('\n').length < 5) {
+      // Add line breaks before headers
+      processedText = processedText.replace(/(#{1,6}\s+)/g, '\n\n$1');
       
-      // Handle bold text with ** or __
-      let formattedLine = line;
+      // Add line breaks after headers (if not already present)
+      processedText = processedText.replace(/(#{1,6}\s+[^\n]+)(?!\n)/g, '$1\n\n');
       
-      // Simple bold formatting
-      if (line.includes('**')) {
-        const parts = line.split('**');
-        formattedLine = parts.map((part, index) => 
-          index % 2 === 1 ? <strong key={index}>{part}</strong> : part
-        );
-      }
+      // Add line breaks before bullet points
+      processedText = processedText.replace(/([^-]\s*)(-\s+)/g, '$1\n$2');
       
-      // Handle patent numbers (make them stand out)
-      if (typeof formattedLine === 'string' && /[A-Z]{2}[0-9]{7}/.test(formattedLine)) {
-        formattedLine = formattedLine.replace(
-          /([A-Z]{2}[0-9]{7})/g, 
-          '<span class="font-medium text-blue-600 bg-blue-50 px-1 py-0.5 rounded">$1</span>'
-        );
-        return (
-          <div 
-            key={i} 
-            className={i > 0 ? 'mt-2' : ''} 
-            dangerouslySetInnerHTML={{ __html: formattedLine }}
-          />
-        );
-      }
+      // Add line breaks after sentences that are likely paragraph boundaries
+      processedText = processedText.replace(/(\.\s+)([A-Z][a-z])/g, '$1\n\n$2');
       
-      return (
-        <div key={i} className={i > 0 ? 'mt-2' : ''}>
-          {formattedLine}
-        </div>
-      );
-    });
+      // Clean up multiple consecutive newlines
+      processedText = processedText.replace(/\n{3,}/g, '\n\n');
+    }
+    
+    // Use ReactMarkdown for proper markdown rendering
+    return (
+      <ReactMarkdown
+        className="prose prose-invert prose-sm max-w-none"
+        remarkPlugins={[remarkBreaks]} // Enable line breaks conversion
+        components={{
+          // Custom components for better styling
+          h1: ({children}) => <h1 className="text-xl font-bold text-white mb-3 mt-4">{children}</h1>,
+          h2: ({children}) => <h2 className="text-lg font-semibold text-white mb-2 mt-3">{children}</h2>,
+          h3: ({children}) => <h3 className="text-md font-medium text-white mb-2 mt-2">{children}</h3>,
+          h4: ({children}) => <h4 className="text-sm font-medium text-gray-200 mb-1 mt-2">{children}</h4>,
+          ul: ({children}) => <ul className="list-disc list-inside space-y-1 text-gray-200 mb-3">{children}</ul>,
+          ol: ({children}) => <ol className="list-decimal list-inside space-y-1 text-gray-200 mb-3">{children}</ol>,
+          li: ({children}) => <li className="text-gray-200 mb-1">{children}</li>,
+          p: ({children}) => <p className="text-gray-200 mb-3 leading-relaxed">{children}</p>,
+          strong: ({children}) => <strong className="font-bold text-white">{children}</strong>,
+          em: ({children}) => <em className="italic text-gray-300">{children}</em>,
+          code: ({children}) => <code className="bg-gray-700 text-cyan-300 px-1 py-0.5 rounded text-sm">{children}</code>,
+          pre: ({children}) => <pre className="bg-gray-800 p-3 rounded-lg overflow-x-auto text-sm text-gray-200 mb-3">{children}</pre>,
+          blockquote: ({children}) => <blockquote className="border-l-4 border-blue-400 pl-4 italic text-gray-300 mb-3">{children}</blockquote>,
+          a: ({href, children}) => <a href={href} className="text-blue-400 hover:text-blue-300 underline" target="_blank" rel="noopener noreferrer">{children}</a>,
+          // Handle line breaks properly
+          br: () => <br className="my-1" />
+        }}
+      >
+        {processedText}
+      </ReactMarkdown>
+    );
   };  const formatSemanticTextContent = (contentData) => {
     const { title, body } = contentData;
     

@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 class PatentStatisticsEnhanced:
     """Enhanced patent statistics with support for various query types"""
-    
     def __init__(self):
         self.session = get_db_session_simple()
     
@@ -32,8 +31,11 @@ class PatentStatisticsEnhanced:
                 return self._get_comparison_years_data(query_params)
             elif query_type == 'relative_years':
                 return self._get_relative_years_data(query_params)
+            elif query_type == 'all_years':
+                return self._get_all_years_data(query_params)
             else:
-                return None
+                # Default to all years if type is not recognized
+                return self._get_all_years_data(query_params)
                 
         except Exception as e:
             logger.error(f"Error getting enhanced publication trends: {e}")
@@ -241,6 +243,90 @@ class PatentStatisticsEnhanced:
             'yearly': yearly_complete,
             'chart': chart
         }
+    
+    def _get_all_years_data(self, query_params: dict):
+        """Get data for all years queries (e.g., 'by year' or generic 'publication trends')"""
+        from sqlalchemy import extract, func
+        from database.models import Patent
+        
+        title = query_params.get('title_context', 'Publication Trends (All Available Data)')
+        
+        try:
+            # Get all years with data from database
+            yearly_stats = self.session.query(
+                extract('year', Patent.publication_date).label('year'),
+                func.count(Patent.publication_number).label('count')
+            ).filter(
+                Patent.publication_date.isnot(None)
+            ).group_by(
+                extract('year', Patent.publication_date)
+            ).order_by('year').all()
+            
+            # Convert to list of dicts
+            yearly_data = []
+            for year, count in yearly_stats:
+                if year is not None:
+                    yearly_data.append({
+                        'year': int(year),
+                        'count': count
+                    })
+            
+            if not yearly_data:
+                return {
+                    'yearly_complete': [],
+                    'chart': None
+                }
+            
+            # Generate chart
+            labels = [str(y['year']) for y in yearly_data]
+            values = [y['count'] for y in yearly_data]
+            
+            chart = {
+                'type': 'line',
+                'data': {
+                    'labels': labels,
+                    'datasets': [{
+                        'label': 'Patents Published',
+                        'data': values,
+                        'borderColor': 'rgb(75, 192, 192)',
+                        'backgroundColor': 'rgba(75, 192, 192, 0.2)',
+                        'tension': 0.1
+                    }]
+                },
+                'options': {
+                    'responsive': True,
+                    'plugins': {
+                        'title': {
+                            'display': True,
+                            'text': title
+                        }
+                    },
+                    'scales': {
+                        'y': {
+                            'beginAtZero': True,
+                            'title': {
+                                'display': True,
+                                'text': 'Number of Patents'
+                            }
+                        },
+                        'x': {
+                            'title': {
+                                'display': True,
+                                'text': 'Year'
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return {
+                'yearly_complete': yearly_data,
+                'chart': chart
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting all years data: {e}")
+            return None
     
     def _generate_chart(self, chart_data: list, chart_type: str, title: str):
         """Generate chart configuration"""

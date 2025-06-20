@@ -1,0 +1,443 @@
+{
+  "categories_tested": 9,
+  "total_queries": 62,
+  "total_passed": 56,
+  "total_failed": 6,
+  "category_results": {
+    "Patent Search": {
+      "total": 6,
+      "passed": 6,
+      "failed": 0,
+      "details": [
+        {
+          "prompt": "Find patents about solar energy storage",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "Okay, here's an analysis of the provided patent data, focusing on patents relevant to solar energy s..."
+        },
+        {
+          "prompt": "Show me patents related to water purification",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "## Analysis of Patents Related to Water Purification Based on the provided patent data, I have analy..."
+        },
+        {
+          "prompt": "Search for patents about sustainable agriculture",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "Here's an analysis of the provided patents, focusing on their relevance to sustainable agriculture a..."
+        },
+        {
+          "prompt": "Find patents about electric vehicle batteries",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "Here's a comprehensive analysis of the provided patent data, focusing on its relevance to electric v..."
+        },
+        {
+          "prompt": "Look for patents on renewable energy systems",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "Here's an analysis of the provided patent data, focusing on aspects relevant to renewable energy sys..."
+        },
+        {
+          "prompt": "Show patents about carbon capture technology",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "Here's an analysis of the provided patent data related to carbon capture technology, focusing on rel..."
+        }
+      ]
+    },
+    "Bar Charts & Analytics": {
+      "total": 8,
+      "passed": 8,
+      "failed": 0,
+      "details": [
+        {
+          "prompt": "Show me patent publication trends by year",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**Publication Trends:**\n\n**Patents by Month:**\n  • Jul 2024: 0 patents\n  • Aug 2024: 0 patents\n  • S..."
+        },
+        {
+          "prompt": "Which SDG has the most patents?",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**SDG Distribution:**\n\n**Total SDG-Classified Patents:** 3,878\n\n**Distribution by SDG:**\n  • SDG 9: ..."
+        },
+        {
+          "prompt": "Show SDG distribution across patents",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**SDG Distribution:**\n\n**Total SDG-Classified Patents:** 3,878\n\n**Distribution by SDG:**\n  • SDG 9: ..."
+        },
+        {
+          "prompt": "What are the top technology fields?",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**IPC Classification Analysis:**\n\n**Total Classified Patents:** 82,454\n\n**Distribution by IPC Sectio..."
+        },
+        {
+          "prompt": "Show top 10 inventors by patent count",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**Top 10 Inventors Analysis:**\n\n📊 **Total Patents by Top Inventors:** 133\n\n🧑‍💼 **Most Prolific Inven..."
+        },
+        {
+          "prompt": "Display patent counts by country",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**Top 10 Countries by Applicant Origin:**\n\n**Total Patents from Top Countries:** 16,602\n\n**Geographi..."
+        },
+        {
+          "prompt": "Show technology analysis by IPC classification",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**IPC Classification Analysis:**\n\n**Total Classified Patents:** 82,454\n\n**Distribution by IPC Sectio..."
+        },
+        {
+          "prompt": "Who are the most prolific assignees?",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**Top 10 Assignees Analysis:**\n\n📊 **Total Patents by Top Assignees:** 827\n\n🏢 **Leading Organizations..."
+        }
+      ]
+    },
+    "Line Charts & Trends": {
+      "total": 8,
+      "passed": 8,
+      "failed": 0,
+      "details": [
+        {
+          "prompt": "Show patent publication trends in last 12 months",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**Publication Trends (Last 12 Months):**\n\n**Patents by Month:**\n  • Jul 2024: 0 patents\n  • Aug 2024..."
+        },
+        {
+          "prompt": "Display publication trends for the last 6 months",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**Publication Trends (Last 6 Months):**\n\n**Patents by Month:**\n  • Jan 2025: 1,043 patents\n  • Feb 2..."
+        },
+        {
+          "prompt": "Show publication trends in 2023",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**Publication Trends for 2023:**\n\n**2023 Monthly Breakdown:**\n  • Jan: 0 patents\n  • Feb: 0 patents\n..."
+        },
+        {
+          "prompt": "Compare patent publication trends in 2020 and 2021",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**Publication Trends for 2020:**\n\n**2020 Monthly Breakdown:**\n  • Jan: 0 patents\n  • Feb: 0 patents\n..."
+        },
+        {
+          "prompt": "Show SDG patent trends over time",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**Publication Trends:**\n\n**Patents by Month:**\n  • Jul 2024: 0 patents\n  • Aug 2024: 0 patents\n  • S..."
+        },
+        {
+          "prompt": "Plot patent filing trends by technology",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**Publication Trends:**\n\n**Patents by Month:**\n  • Jul 2024: 0 patents\n  • Aug 2024: 0 patents\n  • S..."
+        },
+        {
+          "prompt": "Compare trends between 2019 and 2022",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**Publication Trends Comparison: 2019 vs 2022:**\n\n**2019 Monthly Breakdown:**\n  • Jan: 2 patents\n  •..."
+        },
+        {
+          "prompt": "Show publication trends in the last 24 months",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**Publication Trends (Last 24 Months):**\n\n**Patents by Month:**\n  • Jul 2023: 0 patents\n  • Aug 2023..."
+        }
+      ]
+    },
+    "Enhanced Analytics": {
+      "total": 8,
+      "passed": 7,
+      "failed": 1,
+      "details": [
+        {
+          "prompt": "Compare patent publication trends in 2020 and 2000",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "**Publication Trends for 2020:**\n\n**2020 Monthly Breakdown:**\n  • Jan: 0 patents\n  • Feb: 0 patents\n..."
+        },
+        {
+          "prompt": "Show me patent publication trends in last 12 months",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "**Publication Trends (Last 12 Months):**\n\n**Patents by Month:**\n  • Jul 2024: 0 patents\n  • Aug 2024..."
+        },
+        {
+          "prompt": "What are the top 5 inventors?",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "**Top 5 Inventors Analysis:**\n\n📊 **Total Patents by Top Inventors:** 82\n\n🧑‍💼 **Most Prolific Invento..."
+        },
+        {
+          "prompt": "Show geographical distribution of patents",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "**Top 10 Countries by Applicant Origin:**\n\n**Total Patents from Top Countries:** 16,602\n\n**Geographi..."
+        },
+        {
+          "prompt": "Technology analysis by IPC sections",
+          "status": "FAIL",
+          "message": "No response received",
+          "response_preview": "No response"
+        },
+        {
+          "prompt": "Top assignees and their patent counts",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "**Top 10 Assignees Analysis:**\n\n📊 **Total Patents by Top Assignees:** 827\n\n🏢 **Leading Organizations..."
+        },
+        {
+          "prompt": "Patents by applicant countries",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "**Top 10 Assignees Analysis:**\n\n📊 **Total Patents by Top Assignees:** 827\n\n🏢 **Leading Organizations..."
+        },
+        {
+          "prompt": "Show IPC classification distribution",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "**IPC Classification Analysis:**\n\n**Total Classified Patents:** 82,454\n\n**Distribution by IPC Sectio..."
+        }
+      ]
+    },
+    "Pie Charts & Distribution": {
+      "total": 6,
+      "passed": 4,
+      "failed": 2,
+      "details": [
+        {
+          "prompt": "Show percentage distribution of patents by SDG",
+          "status": "FAIL",
+          "message": "No response received",
+          "response_preview": "No response"
+        },
+        {
+          "prompt": "What's the proportion of patents by technology type?",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**IPC Classification Analysis:**\n\n**Total Classified Patents:** 82,454\n\n**Distribution by IPC Sectio..."
+        },
+        {
+          "prompt": "Display patent distribution by geographic region",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**Top 10 Countries by Applicant Origin:**\n\n**Total Patents from Top Countries:** 16,602\n\n**Geographi..."
+        },
+        {
+          "prompt": "Show breakdown of renewable vs non-renewable patents",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**Publication Trends:**\n\n**Patents by Month:**\n  • Jul 2024: 0 patents\n  • Aug 2024: 0 patents\n  • S..."
+        },
+        {
+          "prompt": "What percentage of patents are in each category?",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**IPC Classification Analysis:**\n\n**Total Classified Patents:** 82,454\n\n**Distribution by IPC Sectio..."
+        },
+        {
+          "prompt": "Show distribution of patents by filing organization",
+          "status": "FAIL",
+          "message": "No response received",
+          "response_preview": "No response"
+        }
+      ]
+    },
+    "Area Charts & Volume": {
+      "total": 6,
+      "passed": 5,
+      "failed": 1,
+      "details": [
+        {
+          "prompt": "Show cumulative patent growth over time",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**Publication Trends:**\n\n**Patents by Month:**\n  • Jul 2024: 0 patents\n  • Aug 2024: 0 patents\n  • S..."
+        },
+        {
+          "prompt": "Display overlapping SDG patent volumes",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**SDG Distribution:**\n\n**Total SDG-Classified Patents:** 3,878\n\n**Distribution by SDG:**\n  • SDG 9: ..."
+        },
+        {
+          "prompt": "Show stacked patent trends by technology",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**Publication Trends:**\n\n**Patents by Month:**\n  • Jul 2024: 0 patents\n  • Aug 2024: 0 patents\n  • S..."
+        },
+        {
+          "prompt": "Plot cumulative innovation in clean energy",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**Publication Trends:**\n\n**Patents by Month:**\n  • Jul 2024: 0 patents\n  • Aug 2024: 0 patents\n  • S..."
+        },
+        {
+          "prompt": "Display overlapping patent categories over time",
+          "status": "FAIL",
+          "message": "No response received",
+          "response_preview": "No response"
+        },
+        {
+          "prompt": "Show volume growth in different research areas",
+          "status": "PASS",
+          "message": "Valid response with chart data",
+          "response_preview": "**Publication Trends:**\n\n**Patents by Month:**\n  • Jul 2024: 0 patents\n  • Aug 2024: 0 patents\n  • S..."
+        }
+      ]
+    },
+    "Advanced Visualizations": {
+      "total": 6,
+      "passed": 5,
+      "failed": 1,
+      "details": [
+        {
+          "prompt": "Create a treemap of patent technology categories",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "**IPC Classification Analysis:**\n\n**Total Classified Patents:** 82,454\n\n**Distribution by IPC Sectio..."
+        },
+        {
+          "prompt": "Show stacked bar chart of SDG patents by year",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "**Publication Trends:**\n\n**Patents by Month:**\n  • Jul 2024: 0 patents\n  • Aug 2024: 0 patents\n  • S..."
+        },
+        {
+          "prompt": "Display hierarchical view of patent classifications",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "**IPC Classification Analysis:**\n\n**Total Classified Patents:** 82,454\n\n**Distribution by IPC Sectio..."
+        },
+        {
+          "prompt": "Create a comparative analysis of patent volumes",
+          "status": "FAIL",
+          "message": "No response received",
+          "response_preview": "No response"
+        },
+        {
+          "prompt": "Show multi-dimensional patent data visualization",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "**Publication Trends:**\n\n**Patents by Month:**\n  • Jul 2024: 0 patents\n  • Aug 2024: 0 patents\n  • S..."
+        },
+        {
+          "prompt": "Display complex patent relationship mappings",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "Okay, here's a detailed analysis of the provided patent data, focusing on identifying key relationsh..."
+        }
+      ]
+    },
+    "SDG Analysis": {
+      "total": 8,
+      "passed": 8,
+      "failed": 0,
+      "details": [
+        {
+          "prompt": "Which patents contribute to SDG 7 (Clean Energy)?",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "Here's an analysis of the provided patent data, focusing on its relevance to Sustainable Development..."
+        },
+        {
+          "prompt": "Show patents related to SDG 6 (Clean Water)",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "## Analysis of Patents Related to SDG 6 (Clean Water) This analysis reviews the provided patent data..."
+        },
+        {
+          "prompt": "Find SDG 13 (Climate Action) patents",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "Okay, I will analyze the provided patents and identify those most relevant to SDG 13 (Climate Action..."
+        },
+        {
+          "prompt": "How do patents map to SDG 3 (Good Health)?",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "**SDG Distribution:**\n\n**Total SDG-Classified Patents:** 3,878\n\n**Distribution by SDG:**\n  • SDG 9: ..."
+        },
+        {
+          "prompt": "Show SDG 9 (Industry Innovation) patents",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "Here's an analysis of the provided patent data, focusing on its relevance to SDG 9 (Industry, Innova..."
+        },
+        {
+          "prompt": "Which patents support SDG 2 (Zero Hunger)?",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "Here's an analysis of the provided patents, focusing on their potential relevance to SDG 2 (Zero Hun..."
+        },
+        {
+          "prompt": "Show SDG distribution with percentages",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "**SDG Distribution:**\n\n**Total SDG-Classified Patents:** 3,878\n\n**Distribution by SDG:**\n  • SDG 9: ..."
+        },
+        {
+          "prompt": "SDG trends over the last 5 years",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "**Publication Trends (Last 5 Years):**\n\n**Patents by Year:**\n  • 2021: 12 patents\n  • 2022: 9 patent..."
+        }
+      ]
+    },
+    "Conversational": {
+      "total": 6,
+      "passed": 5,
+      "failed": 1,
+      "details": [
+        {
+          "prompt": "What can you help me with?",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "I can help you understand how patents relate to the United Nations' Sustainable Development Goals (S..."
+        },
+        {
+          "prompt": "Explain how patents relate to SDGs",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "Patents play a multifaceted role in advancing the Sustainable Development Goals (SDGs). On the one h..."
+        },
+        {
+          "prompt": "How does this patent search system work?",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "I can certainly explain how the patent search system works. To give you the most relevant explanatio..."
+        },
+        {
+          "prompt": "What types of charts can you generate?",
+          "status": "FAIL",
+          "message": "No response received",
+          "response_preview": "No response"
+        },
+        {
+          "prompt": "Tell me about the database coverage",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "I can provide information from several patent databases, which I use to give you the most comprehens..."
+        },
+        {
+          "prompt": "How are patents classified by SDG?",
+          "status": "PASS",
+          "message": "Valid response",
+          "response_preview": "**SDG Distribution:**\n\n**Total SDG-Classified Patents:** 3,878\n\n**Distribution by SDG:**\n  • SDG 9: ..."
+        }
+      ]
+    }
+  }
+}

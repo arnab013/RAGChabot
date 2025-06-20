@@ -6,9 +6,10 @@ from .query_manager import QueryManager, handle_query
 from .base import BaseQueryHandler, QueryResponse, ChartGenerator, DateUtils
 from .publication_trends import PublicationTrendsHandler
 from .sdg_distribution import SDGDistributionHandler
-from .technology_analysis import TechnologyAnalysisHandler
-from .inventor_assignee import InventorAssigneeHandler
-from .geographical_analysis import GeographicalAnalysisHandler
+# Temporarily disable problematic imports
+# from .technology_analysis import TechnologyAnalysisHandler
+# from .inventor_assignee import InventorAssigneeHandler
+# from .geographical_analysis import GeographicalAnalysisHandler
 
 __all__ = [
     'QueryManager',
@@ -18,8 +19,9 @@ __all__ = [
     'ChartGenerator',
     'DateUtils',
     'PublicationTrendsHandler',
-    'SDGDistributionHandler',
-    'TechnologyAnalysisHandler',
-    'InventorAssigneeHandler',
-    'GeographicalAnalysisHandler'
+    'SDGDistributionHandler'
+    # Temporarily disabled:
+    # 'TechnologyAnalysisHandler',
+    # 'InventorAssigneeHandler',
+    # 'GeographicalAnalysisHandler'
 ]

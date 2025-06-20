@@ -43,8 +43,7 @@ class SDGDistributionHandler(BaseQueryHandler):
                 message="\n".join(response_lines),
                 chart=chart,                data={'sdg_distribution': sdg_data},
                 insight=insights["insight"],
-                takeaway=insights["takeaway"]
-            )
+                takeaway=insights["takeaway"]            )
             
         except Exception as e:
             error_message = self.generate_error_message(
@@ -53,7 +52,7 @@ class SDGDistributionHandler(BaseQueryHandler):
                 technical_error=str(e)
             )
             return QueryResponse(message=error_message)
-    
+
     def _get_sdg_distribution(self) -> List[Dict[str, Any]]:
         """Get SDG distribution from database"""
         patents = self.session.query(Patent.sdg_number).filter(
@@ -65,12 +64,35 @@ class SDGDistributionHandler(BaseQueryHandler):
         for patent in patents:
             if patent.sdg_number:
                 try:
-                    sdg_list = json.loads(patent.sdg_number)
-                    if isinstance(sdg_list, list):
-                        for sdg in sdg_list:
-                            if isinstance(sdg, (int, str)) and str(sdg).isdigit():
-                                sdg_counter[int(sdg)] += 1
-                except (json.JSONDecodeError, ValueError):
+                    sdg_data = patent.sdg_number
+                    
+                    # Handle different SDG data formats
+                    if isinstance(sdg_data, str):
+                        if sdg_data.isdigit():
+                            # Single SDG as string number (e.g., "7")
+                            sdg_counter[int(sdg_data)] += 1
+                        else:
+                            # Try to parse as JSON array (e.g., ["7", "12"])
+                            try:
+                                sdg_list = json.loads(sdg_data)
+                                if isinstance(sdg_list, list):
+                                    for sdg in sdg_list:
+                                        if isinstance(sdg, (int, str)) and str(sdg).isdigit():
+                                            sdg_counter[int(sdg)] += 1
+                                elif isinstance(sdg_list, (int, str)) and str(sdg_list).isdigit():
+                                    sdg_counter[int(sdg_list)] += 1
+                            except json.JSONDecodeError:
+                                # Handle comma-separated values or other formats
+                                if ',' in sdg_data:
+                                    for sdg in sdg_data.split(','):
+                                        sdg = sdg.strip()
+                                        if sdg.isdigit():
+                                            sdg_counter[int(sdg)] += 1
+                    elif isinstance(sdg_data, (int, float)):
+                        # Direct integer SDG
+                        sdg_counter[int(sdg_data)] += 1
+                        
+                except (ValueError, TypeError) as e:
                     continue
         
         # Convert to list format
@@ -78,21 +100,22 @@ class SDGDistributionHandler(BaseQueryHandler):
             {'sdg': sdg, 'count': count}
             for sdg, count in sdg_counter.most_common(17)  # Max 17 SDGs
         ]
-    
+
     def _format_sdg_response(self, sdg_data: List[Dict]) -> List[str]:
         """Format SDG distribution response"""
-        total_patents = sum(item['count'] for item in sdg_data)
+        total_classifications = sum(item['count'] for item in sdg_data)
         
         response_lines = [
-            "**SDG Distribution:**\n",            f"**Total SDG-Classified Patents:** {total_patents:,}\n",
+            "**SDG Distribution:**\n",
+            f"**Total SDG Classifications:** {total_classifications:,}\n",
             "**Distribution by SDG:**"
         ]
         
         for item in sdg_data:
             sdg = item['sdg']
             count = item['count']
-            percentage = (count / total_patents * 100) if total_patents > 0 else 0
-            response_lines.append(f"  • SDG {sdg}: {count:,} patents ({percentage:.1f}%)")
+            percentage = (count / total_classifications * 100) if total_classifications > 0 else 0
+            response_lines.append(f"  • SDG {sdg}: {count:,} classifications ({percentage:.1f}%)")
         
         return response_lines
     

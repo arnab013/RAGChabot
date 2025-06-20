@@ -3,7 +3,10 @@
 Enhanced API handlers for different query types
 """
 import re
-from stats_queries_enhanced import PatentStatisticsEnhanced
+try:
+    from stats_queries_enhanced import PatentStatisticsEnhanced
+except ImportError:
+    from src.stats_queries_enhanced import PatentStatisticsEnhanced
 
 
 def _handle_publication_trends_enhanced(query: str = "") -> dict:
@@ -40,28 +43,82 @@ def _handle_publication_trends_enhanced(query: str = "") -> dict:
 def _parse_trends_query(query_lower: str) -> dict:
     """Parse different types of trends queries and return parameters"""
     
-    # Initialize default parameters
+    # Initialize default parameters - FIXED: Default to all years instead of 12 months
     params = {
-        'query_type': 'relative_months',  # default
+        'query_type': 'all_years',  # CHANGED: default to all years
         'months_back': 12,
+        'years_back': 5,
         'specific_years': [],
         'comparison_years': [],
-        'title_context': 'Publication Trends'
+        'title_context': 'Publication Trends (All Available Data)'  # CHANGED: better default title
     }
     
-    # Pattern 1: Relative time periods (last X months/years)
+    # Enhanced pattern matching
     month_match = re.search(r'(?:last|past|recent)\s+(\d+)\s+months?', query_lower)
     year_match = re.search(r'(?:last|past|recent)\s+(\d+)\s+years?', query_lower)
-    
-    # Pattern 2: Specific years (trends in 2023, trends for 2024)
+    # NEW: Flexible year pattern that doesn't require "last/past/recent"
+    flexible_year_match = re.search(r'(?:by\s+)?(\d+)\s+years?(?:\s+(?:period|span|range))?', query_lower)
     year_specific = re.findall(r'(?:in|for|during)\s+(\d{4})', query_lower)
-    
-    # Pattern 3: Year mentions for comparison (2023 and 2024, compare 2023 vs 2025)
     year_mentions = re.findall(r'\b(20\d{2})\b', query_lower)
     comparison_keywords = ['compar', 'vs', 'versus', 'against', 'and']
     
-    # Determine query type based on patterns
-    if year_specific:
+    # NEW: Monthly pattern detection
+    monthly_patterns = [
+        r'\bby\s+months?\b',
+        r'\bmonthly\b',
+        r'\bper\s+month\b',
+        r'\bmonth\s+by\s+month\b'
+    ]
+    
+    # NEW: Monthly in specific year pattern
+    monthly_in_year = re.search(r'(?:by\s+)?months?\s+(?:in|for|during)\s+(\d{4})', query_lower)
+    monthly_for_year = re.search(r'monthly.*?(?:in|for|during)\s+(\d{4})', query_lower)
+    
+    # NEW: Monthly in last year pattern
+    monthly_last_year = re.search(r'(?:by\s+)?months?\s+(?:in\s+)?(?:last|past|recent)\s+year', query_lower)
+    
+    # NEW: Check for explicit "by year" pattern - this should show yearly aggregation for all data
+    by_year_pattern = re.search(r'\bby\s+year\b', query_lower)
+    
+    # NEW: Check for patterns that suggest all-time view
+    all_time_patterns = re.search(r'\b(?:all|total|entire|complete|full|overall)\s+(?:time|period|range|data|years?|history)\b', query_lower)
+    
+    # Check if any monthly pattern is present
+    is_monthly_query = any(re.search(pattern, query_lower) for pattern in monthly_patterns) or monthly_in_year or monthly_for_year or monthly_last_year
+    
+    # Determine query type based on patterns - FIXED ORDER OF PRECEDENCE
+    if monthly_last_year:
+        # "by months in last year" - show last 12 months
+        params['query_type'] = 'relative_months'
+        params['months_back'] = 12
+        params['title_context'] = "Publication Trends (Last 12 Months)"
+        
+    elif monthly_in_year or monthly_for_year:
+        # "by month in 2023" - show monthly data for specific year
+        year_match = monthly_in_year or monthly_for_year
+        year = int(year_match.group(1))
+        params['query_type'] = 'specific_years'
+        params['specific_years'] = [year]
+        params['title_context'] = f"Monthly Publication Trends for {year}"
+        
+    elif is_monthly_query and year_specific:
+        # Monthly query with specific year mentioned
+        params['query_type'] = 'specific_years'
+        params['specific_years'] = [int(year) for year in year_specific]
+        params['title_context'] = f"Monthly Publication Trends for {', '.join(year_specific)}"
+        
+    elif is_monthly_query and len(year_mentions) == 1:
+        # Monthly query with year mentioned in text
+        params['query_type'] = 'specific_years'
+        params['specific_years'] = [int(year_mentions[0])]
+        params['title_context'] = f"Monthly Publication Trends for {year_mentions[0]}"
+        
+    elif by_year_pattern and not flexible_year_match:
+        # NEW: User explicitly wants yearly breakdown for all available data
+        params['query_type'] = 'all_years'
+        params['title_context'] = "Publication Trends by Year (All Available Data)"
+    
+    elif year_specific:
         params['query_type'] = 'specific_years'
         params['specific_years'] = [int(year) for year in year_specific]
         params['title_context'] = f"Publication Trends for {', '.join(year_specific)}"
@@ -86,6 +143,22 @@ def _parse_trends_query(query_lower: str) -> dict:
         params['query_type'] = 'relative_years'
         params['years_back'] = int(year_match.group(1))
         params['title_context'] = f"Publication Trends (Last {params['years_back']} Years)"
+    
+    elif flexible_year_match:
+        # NEW: Handle patterns like "by 20 year" or "20 years"
+        params['query_type'] = 'relative_years'
+        params['years_back'] = int(flexible_year_match.group(1))
+        params['title_context'] = f"Publication Trends (Last {params['years_back']} Years)"
+    
+    elif all_time_patterns:
+        # NEW: Explicitly requested all-time view
+        params['query_type'] = 'all_years'
+        params['title_context'] = "Publication Trends (All Available Data)"
+    
+    # NEW: Default case for trend queries - show all available years instead of just 12 months
+    elif 'trend' in query_lower or 'publication' in query_lower:
+        params['query_type'] = 'all_years'
+        params['title_context'] = "Publication Trends (All Available Data)"
     
     return params
 
@@ -129,6 +202,18 @@ def _format_trends_response(data: dict, query_params: dict) -> list:
         
         total_years = sum(year_data['count'] for year_data in data['yearly'])
         response.append(f"\n📅 **Total:** {total_years:,} patents")
+    
+    elif query_type == 'all_years' and data.get('yearly_complete'):
+        response.append("📈 **Patents by Year:**")
+        for year_data in data['yearly_complete']:
+            response.append(f"  • {year_data['year']}: {year_data['count']:,} patents")
+        
+        total_years = sum(year_data['count'] for year_data in data['yearly_complete'])
+        response.append(f"\n📅 **Total:** {total_years:,} patents")
+        if data['yearly_complete']:
+            first_year = data['yearly_complete'][0]['year']
+            last_year = data['yearly_complete'][-1]['year']
+            response.append(f"📅 **Years Covered:** {first_year} - {last_year}")
 
     return response
 

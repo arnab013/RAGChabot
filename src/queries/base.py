@@ -241,6 +241,26 @@ class ChartGenerator:
         }
     
     @staticmethod
+    def generate_pie_chart(labels: List[str], data: List[int], title: str) -> Dict[str, Any]:
+        """Generate a pie chart configuration"""
+        return {
+            'type': 'pie',
+            'data': {
+                'labels': labels,
+                'datasets': [{
+                    'data': data,
+                    'backgroundColor': [
+                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                        '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF',
+                        '#4BC0C0', '#FF6384', '#36A2EB', '#FFCE56',
+                        '#9966FF', '#FF9F40', '#4BC0C0', '#C9CBCF', '#FF6384'
+                    ]
+                }]
+            },
+            'title': title
+        }
+    
+    @staticmethod
     def _hex_to_rgb(hex_color: str) -> str:
         """Convert hex color to RGB string"""
         hex_color = hex_color.lstrip('#')

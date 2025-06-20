@@ -8,9 +8,27 @@ from .base import BaseQueryHandler, QueryResponse
 try:
     from .publication_trends import PublicationTrendsHandler
     from .sdg_distribution import SDGDistributionHandler
-    from .technology_analysis import TechnologyAnalysisHandler
-    from .inventor_assignee import InventorAssigneeHandler
-    from .geographical_analysis import GeographicalAnalysisHandler
+    # Temporarily disable problematic imports until they're fixed
+    # from .technology_analysis import TechnologyAnalysisHandler
+    # from .inventor_assignee import InventorAssigneeHandler
+    # from .geographical_analysis import GeographicalAnalysisHandler
+    
+    # Create placeholder classes to avoid errors
+    class TechnologyAnalysisHandler:
+        def get_query_keywords(self): return ['technology', 'tech']
+        def handle_query(self, query, **kwargs): 
+            return QueryResponse(message="Technology analysis temporarily unavailable")
+    
+    class InventorAssigneeHandler:
+        def get_query_keywords(self): return ['inventor', 'assignee']
+        def handle_query(self, query, **kwargs):
+            return QueryResponse(message="Inventor/assignee analysis temporarily unavailable")
+    
+    class GeographicalAnalysisHandler:
+        def get_query_keywords(self): return ['geographical', 'country']
+        def handle_query(self, query, **kwargs):
+            return QueryResponse(message="Geographical analysis temporarily unavailable")
+            
 except ImportError as e:
     import logging
     logging.error(f"Error importing handlers: {e}")
@@ -29,7 +47,8 @@ class QueryManager:
             'inventor_assignee': InventorAssigneeHandler(),
             'geographical_analysis': GeographicalAnalysisHandler()
         }
-          # Build keyword mapping for quick lookup
+        
+        # Build keyword mapping for quick lookup
         self.keyword_map = self._build_keyword_map()
     
     def _build_keyword_map(self) -> Dict[str, str]:
