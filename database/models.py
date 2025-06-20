@@ -1,10 +1,26 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, Date, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Text, Date, ForeignKey, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 import json
 import numpy as np
+from datetime import datetime
 
 Base = declarative_base()
+
+class DataSourceFile(Base):
+    """Track imported data files to prevent duplicates and enable incremental updates"""
+    __tablename__ = 'data_source_files'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    filename = Column(String, unique=True, nullable=False)
+    file_path = Column(String, nullable=False)
+    file_hash = Column(String, nullable=False)  # SHA256 hash for change detection
+    file_size = Column(Integer)
+    import_date = Column(DateTime, default=datetime.utcnow)
+    records_imported = Column(Integer, default=0)
+    
+    def __repr__(self):
+        return f"<DataSourceFile(filename='{self.filename}', records={self.records_imported})>"
 
 class Patent(Base):
     __tablename__ = 'patents'
