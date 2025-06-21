@@ -19,9 +19,11 @@ class PublicationTrendsHandler(BaseQueryHandler):
     def get_query_keywords(self) -> List[str]:
         """Keywords that identify publication trends queries"""
         return [
-            "publication trend", "publication trends", "trends", "trend",
-            "monthly", "yearly", "annual", "by year", "by month",
-            "last", "past", "recent", "compare", "comparison", "vs", "versus"
+            "publication trend", "publication trends", "publication by year", "publication by month",
+            "monthly trends", "yearly trends", "annual trends", "by year", "by month",
+            "last months", "past years", "recent trends", "patent trends over time",
+            "compare years", "year comparison", "trends in", "trends for", 
+            "2023 vs 2024", "year vs year", "versus years"
         ]
     
     def handle_query(self, query: str, **kwargs) -> QueryResponse:

@@ -72,7 +72,6 @@ const examplePrompts = [
       "Show percentage distribution of patents by SDG",
       "What's the proportion of patents by technology type?",
       "Display patent distribution by geographic region",
-      "Show breakdown of renewable vs non-renewable patents",
       "What percentage of patents are in each category?",
       "Show distribution of patents by filing organization"
     ]

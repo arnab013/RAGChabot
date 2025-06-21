@@ -44,7 +44,7 @@ const MessageBubble = ({ message }) => {
       if (isUser) {
         return (
           <div className="text-[15px] leading-relaxed">
-            {formatTextContent(content)}
+            {formatTextContent(content, true)}
           </div>
         );
       }
@@ -160,7 +160,7 @@ const MessageBubble = ({ message }) => {
       return <div className="text-red-500 text-sm">Error displaying message content</div>;
     }
   };
-  const formatTextContent = (text) => {
+  const formatTextContent = (text, isUserMessage = false) => {
     if (!text) return <div></div>;
     
     // Pre-process text to add line breaks if missing
@@ -183,6 +183,23 @@ const MessageBubble = ({ message }) => {
       // Clean up multiple consecutive newlines
       processedText = processedText.replace(/\n{3,}/g, '\n\n');
     }
+
+    // Define colors based on message type
+    const textColors = isUserMessage ? {
+      primary: 'text-black',
+      secondary: 'text-gray-800',
+      accent: 'text-gray-900',
+      link: 'text-blue-700',
+      code: 'text-purple-700',
+      codeBackground: 'bg-gray-200'
+    } : {
+      primary: 'text-white',
+      secondary: 'text-gray-200',
+      accent: 'text-gray-300',
+      link: 'text-blue-400',
+      code: 'text-cyan-300',
+      codeBackground: 'bg-gray-700'
+    };
     
     // Use ReactMarkdown for proper markdown rendering
     return (
@@ -191,20 +208,20 @@ const MessageBubble = ({ message }) => {
         remarkPlugins={[remarkBreaks]} // Enable line breaks conversion
         components={{
           // Custom components for better styling
-          h1: ({children}) => <h1 className="text-xl font-bold text-white mb-3 mt-4">{children}</h1>,
-          h2: ({children}) => <h2 className="text-lg font-semibold text-white mb-2 mt-3">{children}</h2>,
-          h3: ({children}) => <h3 className="text-md font-medium text-white mb-2 mt-2">{children}</h3>,
-          h4: ({children}) => <h4 className="text-sm font-medium text-gray-200 mb-1 mt-2">{children}</h4>,
-          ul: ({children}) => <ul className="list-disc list-inside space-y-1 text-gray-200 mb-3">{children}</ul>,
-          ol: ({children}) => <ol className="list-decimal list-inside space-y-1 text-gray-200 mb-3">{children}</ol>,
-          li: ({children}) => <li className="text-gray-200 mb-1">{children}</li>,
-          p: ({children}) => <p className="text-gray-200 mb-3 leading-relaxed">{children}</p>,
-          strong: ({children}) => <strong className="font-bold text-white">{children}</strong>,
-          em: ({children}) => <em className="italic text-gray-300">{children}</em>,
-          code: ({children}) => <code className="bg-gray-700 text-cyan-300 px-1 py-0.5 rounded text-sm">{children}</code>,
-          pre: ({children}) => <pre className="bg-gray-800 p-3 rounded-lg overflow-x-auto text-sm text-gray-200 mb-3">{children}</pre>,
-          blockquote: ({children}) => <blockquote className="border-l-4 border-blue-400 pl-4 italic text-gray-300 mb-3">{children}</blockquote>,
-          a: ({href, children}) => <a href={href} className="text-blue-400 hover:text-blue-300 underline" target="_blank" rel="noopener noreferrer">{children}</a>,
+          h1: ({children}) => <h1 className={`text-xl font-bold ${textColors.primary} mb-3 mt-4`}>{children}</h1>,
+          h2: ({children}) => <h2 className={`text-lg font-semibold ${textColors.primary} mb-2 mt-3`}>{children}</h2>,
+          h3: ({children}) => <h3 className={`text-md font-medium ${textColors.primary} mb-2 mt-2`}>{children}</h3>,
+          h4: ({children}) => <h4 className={`text-sm font-medium ${textColors.secondary} mb-1 mt-2`}>{children}</h4>,
+          ul: ({children}) => <ul className={`list-disc list-inside space-y-1 ${textColors.secondary} mb-3`}>{children}</ul>,
+          ol: ({children}) => <ol className={`list-decimal list-inside space-y-1 ${textColors.secondary} mb-3`}>{children}</ol>,
+          li: ({children}) => <li className={`${textColors.secondary} mb-1`}>{children}</li>,
+          p: ({children}) => <p className={`${textColors.secondary} mb-3 leading-relaxed`}>{children}</p>,
+          strong: ({children}) => <strong className={`font-bold ${textColors.primary}`}>{children}</strong>,
+          em: ({children}) => <em className={`italic ${textColors.accent}`}>{children}</em>,
+          code: ({children}) => <code className={`${textColors.codeBackground} ${textColors.code} px-1 py-0.5 rounded text-sm`}>{children}</code>,
+          pre: ({children}) => <pre className={`bg-gray-800 p-3 rounded-lg overflow-x-auto text-sm ${textColors.secondary} mb-3`}>{children}</pre>,
+          blockquote: ({children}) => <blockquote className={`border-l-4 border-blue-400 pl-4 italic ${textColors.accent} mb-3`}>{children}</blockquote>,
+          a: ({href, children}) => <a href={href} className={`${textColors.link} hover:${textColors.link} underline`} target="_blank" rel="noopener noreferrer">{children}</a>,
           // Handle line breaks properly
           br: () => <br className="my-1" />
         }}
@@ -367,7 +384,7 @@ const MessageBubble = ({ message }) => {
           <div className={`
             px-6 py-5 rounded-2xl shadow-lg relative backdrop-blur-sm
             ${isUser 
-              ? 'bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-gray-900 rounded-tr-md shadow-yellow-400/30 border border-yellow-300/50 max-w-[75%] min-w-[150px] inline-block' 
+              ? 'bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-black rounded-tr-md shadow-yellow-400/30 border border-yellow-300/50 max-w-[75%] min-w-[150px] inline-block' 
               : 'bg-gradient-to-r from-cyan-400/20 via-blue-500/20 to-cyan-400/20 text-white rounded-tl-md shadow-cyan-400/30 border border-cyan-400/30 backdrop-blur-md w-full max-w-full'
             }
             transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.01]

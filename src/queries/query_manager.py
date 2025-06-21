@@ -8,26 +8,146 @@ from .base import BaseQueryHandler, QueryResponse
 try:
     from .publication_trends import PublicationTrendsHandler
     from .sdg_distribution import SDGDistributionHandler
-    # Temporarily disable problematic imports until they're fixed
-    # from .technology_analysis import TechnologyAnalysisHandler
-    # from .inventor_assignee import InventorAssigneeHandler
-    # from .geographical_analysis import GeographicalAnalysisHandler
     
-    # Create placeholder classes to avoid errors
+    # Import simple analytics functions
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+    from analytics_handlers_simple import get_top_technology_fields, get_top_inventors, get_patent_counts_by_country
+    from overlapping_categories_handler import get_overlapping_categories_over_time
+    
+    # Create simple working handlers
     class TechnologyAnalysisHandler:
-        def get_query_keywords(self): return ['technology', 'tech']
-        def handle_query(self, query, **kwargs): 
-            return QueryResponse(message="Technology analysis temporarily unavailable")
+        def get_query_keywords(self): 
+            return ['technology', 'tech', 'field', 'classification', 'ipc', 'category', 'domain', 'technology fields', 'top technology', 'technology analysis', 'technology type', 'patent technology', 'technology categories']
+        
+        def _extract_limit(self, query):
+            """Extract limit from query (e.g., 'top 5', 'first 10')"""
+            import re
+            patterns = [
+                r'\btop\s+(\d+)\b',
+                r'\bfirst\s+(\d+)\b', 
+                r'\b(\d+)\s+top\b',
+                r'\bshow\s+(\d+)\b',
+                r'\blimit\s+(\d+)\b'
+            ]
+            
+            for pattern in patterns:
+                match = re.search(pattern, query.lower())
+                if match:
+                    return int(match.group(1))
+            return None
+        
+        def handle_query(self, query, **kwargs):
+            limit = self._extract_limit(query)
+            result = get_top_technology_fields(limit)
+            
+            # The enhanced analytics function now returns insights and takeaways
+            return QueryResponse(
+                message=result['message'], 
+                chart=result['chart'],
+                insight=result.get('insight', ''),
+                takeaway=result.get('takeaway', '')
+            )
     
     class InventorAssigneeHandler:
-        def get_query_keywords(self): return ['inventor', 'assignee']
+        def get_query_keywords(self): 
+            return ['inventor', 'assignee', 'company', 'organization', 'applicant', 'top', 'most', 'leading', 'top inventors', 'prolific inventors', 'top assignees', 'most prolific', 'inventor count', 'patent count', 'assignee count', 'inventors by patent count', 'top 5 inventors', 'top 10 inventors']
+        
+        def _extract_limit(self, query):
+            """Extract limit from query (e.g., 'top 5', 'first 10')"""
+            import re
+            patterns = [
+                r'\btop\s+(\d+)\b',
+                r'\bfirst\s+(\d+)\b', 
+                r'\b(\d+)\s+top\b',
+                r'\bshow\s+(\d+)\b',
+                r'\blimit\s+(\d+)\b'
+            ]
+            
+            for pattern in patterns:
+                match = re.search(pattern, query.lower())
+                if match:
+                    return int(match.group(1))
+            return None
+        
         def handle_query(self, query, **kwargs):
-            return QueryResponse(message="Inventor/assignee analysis temporarily unavailable")
+            limit = self._extract_limit(query)
+            result = get_top_inventors(limit)
+            
+            # The enhanced analytics function now returns insights and takeaways
+            return QueryResponse(
+                message=result['message'],
+                chart=result['chart'],
+                insight=result.get('insight', ''),
+                takeaway=result.get('takeaway', '')
+            )
     
     class GeographicalAnalysisHandler:
-        def get_query_keywords(self): return ['geographical', 'country']
+        def get_query_keywords(self): 
+            return ['geographical', 'country', 'region', 'location', 'nation', 'by country', 'per country', 'countries', 'patent counts by country', 'geographical distribution', 'applicant countries', 'geographic region']
+        
+        def _extract_limit(self, query):
+            """Extract limit from query (e.g., 'top 5', 'first 10')"""
+            import re
+            patterns = [
+                r'\btop\s+(\d+)\b',
+                r'\bfirst\s+(\d+)\b', 
+                r'\b(\d+)\s+top\b',
+                r'\bshow\s+(\d+)\b',
+                r'\blimit\s+(\d+)\b'
+            ]
+            
+            for pattern in patterns:
+                match = re.search(pattern, query.lower())
+                if match:
+                    return int(match.group(1))
+            return None
+        
         def handle_query(self, query, **kwargs):
-            return QueryResponse(message="Geographical analysis temporarily unavailable")
+            limit = self._extract_limit(query)
+            result = get_patent_counts_by_country(limit)
+            
+            # The enhanced analytics function now returns insights and takeaways
+            return QueryResponse(
+                message=result['message'],
+                chart=result['chart'],
+                insight=result.get('insight', ''),
+                takeaway=result.get('takeaway', '')
+            )
+    
+    class OverlappingCategoriesHandler:
+        def get_query_keywords(self):
+            return ['overlapping', 'overlap', 'categories over time', 'category overlap', 'multiple categories', 'cross-category', 'interdisciplinary']
+        
+        def _extract_limit(self, query):
+            """Extract limit from query (e.g., 'top 5', 'first 10')"""
+            import re
+            patterns = [
+                r'\btop\s+(\d+)\b',
+                r'\bfirst\s+(\d+)\b', 
+                r'\b(\d+)\s+top\b',
+                r'\bshow\s+(\d+)\b',
+                r'\blimit\s+(\d+)\b'
+            ]
+            
+            for pattern in patterns:
+                match = re.search(pattern, query.lower())
+                if match:
+                    return int(match.group(1))
+            return None
+        
+        def handle_query(self, query, **kwargs):
+            limit = self._extract_limit(query)
+            result = get_overlapping_categories_over_time(limit)
+            
+            # Generate insights and takeaways (this function may not have them)
+            return QueryResponse(
+                message=result['message'],
+                chart=result['chart'],
+                insight=result.get('insight', ''),
+                takeaway=result.get('takeaway', '')
+            )
             
 except ImportError as e:
     import logging
@@ -45,7 +165,8 @@ class QueryManager:
             'sdg_distribution': SDGDistributionHandler(),
             'technology_analysis': TechnologyAnalysisHandler(),
             'inventor_assignee': InventorAssigneeHandler(),
-            'geographical_analysis': GeographicalAnalysisHandler()
+            'geographical_analysis': GeographicalAnalysisHandler(),
+            'overlapping_categories': OverlappingCategoriesHandler()
         }
         
         # Build keyword mapping for quick lookup
@@ -166,8 +287,8 @@ Keep it concise (2-3 sentences) and avoid technical details.
         if handler_scores:
             return max(handler_scores.items(), key=lambda x: x[1])[0]
         
-        # Default handler if no specific match
-        return 'publication_trends'
+        # No specific handler found - return None to trigger semantic search
+        return None
     
     def get_available_queries(self) -> Dict[str, List[str]]:
         """Get list of available query types and their keywords"""
